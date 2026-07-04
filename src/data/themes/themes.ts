@@ -1,0 +1,156 @@
+import type { Theme } from "../../types/theme";
+
+export const THEMES: Theme[] = [
+  {
+    id: "hotel-chic-neutral",
+    name: "Hotel Chic Neutral",
+    description: "Warm layered neutrals with an understated luxury feeling.",
+    fonts: { display: "Playfair Display", body: "Inter" },
+    colors: {
+      background: "#FAF7F2",
+      surface: "#F1EAE0",
+      text: "#3E3830",
+      textMuted: "#8A8073",
+      heading: "#2E2921",
+      accent: "#A9824E",
+      accentSoft: "#E4D6C0",
+      divider: "#DDD2C2",
+      footerText: "#A69B8A",
+    },
+    defaultPalette: [
+      { name: "Cream", hex: "#F2E8D8" },
+      { name: "Sand", hex: "#D6C0A2" },
+      { name: "Taupe", hex: "#9B8574" },
+      { name: "Walnut", hex: "#5D3925" },
+      { name: "Brass", hex: "#A9824E" },
+    ],
+  },
+  {
+    id: "mediterranean-clean",
+    name: "Mediterranean Clean",
+    description: "Fresh whites with olive, lemon and sea-blue accents.",
+    fonts: { display: "Playfair Display", body: "Inter" },
+    colors: {
+      background: "#FDFCF8",
+      surface: "#F3F1E8",
+      text: "#37403A",
+      textMuted: "#7E8A80",
+      heading: "#26302A",
+      accent: "#7A8B5C",
+      accentSoft: "#E5E9D6",
+      divider: "#E0E2D4",
+      footerText: "#9AA69C",
+    },
+    defaultPalette: [
+      { name: "White Linen", hex: "#FDFCF8" },
+      { name: "Olive", hex: "#7A8B5C" },
+      { name: "Lemon", hex: "#E8C547" },
+      { name: "Terracotta", hex: "#C4703F" },
+      { name: "Sea Blue", hex: "#4E7A8A" },
+    ],
+  },
+  {
+    id: "scandinavian-soft",
+    name: "Scandinavian Soft",
+    description: "Airy light greys and pale wood tones, quiet and modern.",
+    fonts: { display: "Cormorant Garamond", body: "Inter" },
+    colors: {
+      background: "#FBFBFA",
+      surface: "#F0EFEC",
+      text: "#41403C",
+      textMuted: "#8D8C86",
+      heading: "#302F2B",
+      accent: "#A9A08B",
+      accentSoft: "#E9E6DE",
+      divider: "#E2E1DC",
+      footerText: "#A5A49E",
+    },
+    defaultPalette: [
+      { name: "Snow", hex: "#FBFBFA" },
+      { name: "Fog", hex: "#DCDAD3" },
+      { name: "Pale Oak", hex: "#D9C9B2" },
+      { name: "Stone", hex: "#A9A08B" },
+      { name: "Charcoal", hex: "#41403C" },
+    ],
+  },
+  {
+    id: "dark-editorial",
+    name: "Dark Editorial",
+    description: "Moody near-black pages with warm gold accents.",
+    fonts: { display: "Playfair Display", body: "Inter" },
+    colors: {
+      background: "#1E1C1A",
+      surface: "#2A2724",
+      text: "#D8D2C8",
+      textMuted: "#8F887C",
+      heading: "#F0E9DC",
+      accent: "#C0A264",
+      accentSoft: "#3B3529",
+      divider: "#3D3934",
+      footerText: "#7C766B",
+    },
+    defaultPalette: [
+      { name: "Ink", hex: "#1E1C1A" },
+      { name: "Espresso", hex: "#3B3128" },
+      { name: "Gold", hex: "#C0A264" },
+      { name: "Bone", hex: "#E8E0D0" },
+      { name: "Rust", hex: "#96502F" },
+    ],
+  },
+  {
+    id: "botanical-garden",
+    name: "Botanical Garden",
+    description: "Deep greens and earthy naturals for outdoor concepts.",
+    fonts: { display: "Cormorant Garamond", body: "Inter" },
+    colors: {
+      background: "#F8F8F3",
+      surface: "#ECEEE3",
+      text: "#39443A",
+      textMuted: "#7D897E",
+      heading: "#273327",
+      accent: "#4E6B4F",
+      accentSoft: "#DCE4D6",
+      divider: "#DCE0D2",
+      footerText: "#93A093",
+    },
+    defaultPalette: [
+      { name: "Ivory", hex: "#F8F8F3" },
+      { name: "Sage", hex: "#A9B79B" },
+      { name: "Forest", hex: "#4E6B4F" },
+      { name: "Bark", hex: "#6E5A44" },
+      { name: "Slate", hex: "#5C6670" },
+    ],
+  },
+  {
+    id: "warm-minimal",
+    name: "Warm Minimal",
+    description: "Clean editorial white with soft clay and blush accents.",
+    fonts: { display: "Playfair Display", body: "Inter" },
+    colors: {
+      background: "#FFFFFF",
+      surface: "#F6F1EC",
+      text: "#44403B",
+      textMuted: "#93897F",
+      heading: "#332F2A",
+      accent: "#B37D5E",
+      accentSoft: "#EFDFD4",
+      divider: "#E8E1D9",
+      footerText: "#A99F94",
+    },
+    defaultPalette: [
+      { name: "White", hex: "#FFFFFF" },
+      { name: "Blush", hex: "#EFDFD4" },
+      { name: "Clay", hex: "#B37D5E" },
+      { name: "Cocoa", hex: "#6B5040" },
+      { name: "Graphite", hex: "#44403B" },
+    ],
+  },
+];
+
+export function getTheme(id: string): Theme {
+  return THEMES.find((t) => t.id === id) ?? THEMES[0];
+}
+
+/** Standalone palette presets available in the palette manager. */
+export const PALETTE_PRESETS: { id: string; name: string; colors: { name: string; hex: string }[] }[] =
+  THEMES.map((t) => ({ id: `preset-${t.id}`, name: t.name, colors: t.defaultPalette }));

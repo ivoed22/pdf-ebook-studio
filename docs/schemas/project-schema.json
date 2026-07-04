@@ -1,0 +1,83 @@
+{
+  "title": "PDF Ebook Studio Project Schema",
+  "type": "object",
+  "required": [
+    "projectMeta",
+    "languageVersions",
+    "assets",
+    "pages"
+  ],
+  "properties": {
+    "projectMeta": {
+      "type": "object",
+      "required": [
+        "title",
+        "productType",
+        "documentFormat",
+        "theme"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "productType": {
+          "enum": [
+            "recipe-ebook",
+            "interior-magazine",
+            "exterior-magazine",
+            "general-ebook"
+          ]
+        },
+        "documentFormat": {
+          "enum": [
+            "A4-portrait"
+          ]
+        },
+        "theme": {
+          "type": "string"
+        },
+        "outputProfile": {
+          "enum": [
+            "standard-pdf",
+            "etsy-digital-product"
+          ]
+        },
+        "author": {
+          "type": "string"
+        },
+        "year": {
+          "type": "string"
+        }
+      }
+    },
+    "languageVersions": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "nl",
+          "en"
+        ]
+      }
+    },
+    "assets": {
+      "type": "object",
+      "properties": {
+        "imageFolder": {
+          "type": "string"
+        },
+        "coverImage": {
+          "type": "string"
+        }
+      }
+    },
+    "palettes": {
+      "type": "array"
+    },
+    "pages": {
+      "type": "array"
+    }
+  }
+}

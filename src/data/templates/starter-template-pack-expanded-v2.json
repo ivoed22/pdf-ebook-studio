@@ -1,0 +1,2138 @@
+{
+  "templatePackName": "PDF Ebook Studio Expanded Template Pack",
+  "version": "2.0",
+  "documentFormat": "A4-portrait",
+  "globalRules": {
+    "safeMarginMm": 14,
+    "footer": {
+      "enabled": true,
+      "leftTextField": "projectTitle",
+      "rightText": "Page {pageNumber}"
+    },
+    "header": {
+      "enabled": false
+    },
+    "overflowPolicy": "warn-first-then-shrink-minimally",
+    "imageCropControls": [
+      "center",
+      "top",
+      "bottom",
+      "left",
+      "right",
+      "custom-focus"
+    ],
+    "supportedProductTypes": [
+      "recipe-ebook",
+      "interior-magazine",
+      "exterior-magazine",
+      "general-ebook"
+    ],
+    "supportedLanguages": [
+      "nl",
+      "en"
+    ],
+    "supportedExportProfiles": [
+      "standard-pdf",
+      "etsy-digital-product"
+    ]
+  },
+  "templateGroups": [
+    "Core Magazine",
+    "Interior Magazine",
+    "Recipe Ebook",
+    "Exterior Magazine",
+    "General Ebook",
+    "Bonus / Utility",
+    "Etsy Listing Visuals"
+  ],
+  "templates": [
+    {
+      "id": "magazine-cover-editorial",
+      "name": "Magazine Cover Editorial",
+      "group": "Core Magazine",
+      "productTypes": [
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "subtitle",
+        "heroImage"
+      ],
+      "optionalFields": [
+        "year",
+        "volume",
+        "tagline",
+        "author"
+      ],
+      "layoutIntent": "Premium cover with large hero image and centered title block.",
+      "imageArea": "top-large",
+      "textAreas": [
+        "title",
+        "subtitle",
+        "tagline"
+      ],
+      "paletteArea": "optional-dots",
+      "recommendedUse": "Main cover.",
+      "visualNotes": "Coffee-table-book feeling, elegant typography, large quiet image.",
+      "validationNotes": [
+        "heroImage required"
+      ]
+    },
+    {
+      "id": "magazine-cover-full-bleed",
+      "name": "Magazine Cover Full Bleed",
+      "group": "Core Magazine",
+      "productTypes": [
+        "interior-magazine",
+        "exterior-magazine",
+        "recipe-ebook",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "subtitle",
+        "heroImage"
+      ],
+      "optionalFields": [
+        "logoText",
+        "author",
+        "year",
+        "tagline"
+      ],
+      "layoutIntent": "Full-bleed image cover with title overlay.",
+      "imageArea": "full-bleed",
+      "textAreas": [
+        "title",
+        "subtitle"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "More dramatic cover.",
+      "visualNotes": "Use dark gradient overlay for readability.",
+      "validationNotes": []
+    },
+    {
+      "id": "magazine-opening-page",
+      "name": "Magazine Opening Page",
+      "group": "Core Magazine",
+      "productTypes": [
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "body"
+      ],
+      "optionalFields": [
+        "quote",
+        "smallImage",
+        "palette"
+      ],
+      "layoutIntent": "Text-led editorial opener with luxury spacing.",
+      "imageArea": "none-or-small",
+      "textAreas": [
+        "title",
+        "body",
+        "quote"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Opening statement.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "magazine-introduction",
+      "name": "Magazine Introduction",
+      "group": "Core Magazine",
+      "productTypes": [
+        "interior-magazine",
+        "exterior-magazine",
+        "recipe-ebook",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "body"
+      ],
+      "optionalFields": [
+        "heroImage",
+        "quote",
+        "authorNote"
+      ],
+      "layoutIntent": "Introduction page with optional supporting image.",
+      "imageArea": "optional-side",
+      "textAreas": [
+        "title",
+        "body",
+        "quote"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Explain the ebook's promise.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "magazine-principles",
+      "name": "Design / Guide Principles",
+      "group": "Core Magazine",
+      "productTypes": [
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "principles"
+      ],
+      "optionalFields": [
+        "intro",
+        "heroImage"
+      ],
+      "layoutIntent": "Numbered principles page.",
+      "imageArea": "optional-small",
+      "textAreas": [
+        "title",
+        "intro",
+        "principles"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Explain core framework.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "magazine-how-to-use",
+      "name": "How To Use This Guide",
+      "group": "Core Magazine",
+      "productTypes": [
+        "interior-magazine",
+        "exterior-magazine",
+        "recipe-ebook",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "steps"
+      ],
+      "optionalFields": [
+        "intro",
+        "tip"
+      ],
+      "layoutIntent": "Step-by-step instructional page.",
+      "imageArea": "none",
+      "textAreas": [
+        "title",
+        "intro",
+        "steps",
+        "tip"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Before content chapters.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "magazine-collection-overview",
+      "name": "Collection Overview",
+      "group": "Core Magazine",
+      "productTypes": [
+        "interior-magazine",
+        "exterior-magazine",
+        "recipe-ebook",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "items"
+      ],
+      "optionalFields": [
+        "intro",
+        "columns"
+      ],
+      "layoutIntent": "Table of contents / concept overview.",
+      "imageArea": "none",
+      "textAreas": [
+        "title",
+        "intro",
+        "items"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "TOC or index.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "magazine-section-divider",
+      "name": "Section Divider",
+      "group": "Core Magazine",
+      "productTypes": [
+        "interior-magazine",
+        "exterior-magazine",
+        "recipe-ebook",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title"
+      ],
+      "optionalFields": [
+        "subtitle",
+        "heroImage",
+        "sectionNumber"
+      ],
+      "layoutIntent": "Elegant divider page between sections.",
+      "imageArea": "optional-full",
+      "textAreas": [
+        "title",
+        "subtitle",
+        "sectionNumber"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Chapter/section breaks.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "interior-concept-v1",
+      "name": "Interior Concept V1",
+      "group": "Interior Magazine",
+      "productTypes": [
+        "interior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "subtitle",
+        "heroImage",
+        "whyItWorks",
+        "howToRecreate",
+        "palette",
+        "materials",
+        "designNotes"
+      ],
+      "optionalFields": [
+        "styleTags",
+        "imageNotes"
+      ],
+      "layoutIntent": "Large hero image on top with editorial analysis underneath.",
+      "imageArea": "top-large",
+      "textAreas": [
+        "title",
+        "subtitle",
+        "whyItWorks",
+        "howToRecreate"
+      ],
+      "paletteArea": "right-column",
+      "recommendedUse": "Main interior concept page.",
+      "visualNotes": "This is the Hotel Chic style template.",
+      "validationNotes": []
+    },
+    {
+      "id": "interior-concept-v2-side-image",
+      "name": "Interior Concept V2 Side Image",
+      "group": "Interior Magazine",
+      "productTypes": [
+        "interior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "subtitle",
+        "heroImage",
+        "keyElements",
+        "palette",
+        "materials"
+      ],
+      "optionalFields": [
+        "whyItWorks",
+        "designNotes"
+      ],
+      "layoutIntent": "Side image and compact editorial text.",
+      "imageArea": "left-or-right-large",
+      "textAreas": [
+        "title",
+        "subtitle",
+        "keyElements",
+        "whyItWorks"
+      ],
+      "paletteArea": "bottom-or-side",
+      "recommendedUse": "Use to break repetition.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "interior-concept-v3-full-bleed",
+      "name": "Interior Concept V3 Full Bleed",
+      "group": "Interior Magazine",
+      "productTypes": [
+        "interior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "subtitle",
+        "heroImage",
+        "designNotes"
+      ],
+      "optionalFields": [
+        "palette",
+        "materials",
+        "quote"
+      ],
+      "layoutIntent": "Image-led full-bleed concept page with minimal copy.",
+      "imageArea": "full-bleed",
+      "textAreas": [
+        "title",
+        "subtitle",
+        "designNotes",
+        "quote"
+      ],
+      "paletteArea": "overlay-or-bottom",
+      "recommendedUse": "Premium visual break page.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "interior-concept-v4-detail-focus",
+      "name": "Interior Concept V4 Detail Focus",
+      "group": "Interior Magazine",
+      "productTypes": [
+        "interior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "heroImage",
+        "detailNotes",
+        "palette",
+        "materials"
+      ],
+      "optionalFields": [
+        "subtitle",
+        "macroImage",
+        "designNotes"
+      ],
+      "layoutIntent": "Close-up/detail-oriented interior page.",
+      "imageArea": "top-detail-or-grid",
+      "textAreas": [
+        "title",
+        "detailNotes",
+        "materials"
+      ],
+      "paletteArea": "side-column",
+      "recommendedUse": "For accessories, textiles, lighting, material details.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "interior-moodboard-grid",
+      "name": "Interior Moodboard Grid",
+      "group": "Interior Magazine",
+      "productTypes": [
+        "interior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "images",
+        "palette",
+        "materials"
+      ],
+      "optionalFields": [
+        "notes",
+        "styleTags"
+      ],
+      "layoutIntent": "Multi-image moodboard with material labels.",
+      "imageArea": "multi-image-grid",
+      "textAreas": [
+        "title",
+        "materials",
+        "notes"
+      ],
+      "paletteArea": "bottom-row",
+      "recommendedUse": "Moodboard page.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "interior-before-after-direction",
+      "name": "Interior Before / After Direction",
+      "group": "Interior Magazine",
+      "productTypes": [
+        "interior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "beforeImage",
+        "afterImage",
+        "transformationNotes"
+      ],
+      "optionalFields": [
+        "palette",
+        "materials",
+        "avoid"
+      ],
+      "layoutIntent": "Before/after style direction page.",
+      "imageArea": "two-image-comparison",
+      "textAreas": [
+        "title",
+        "transformationNotes",
+        "avoid"
+      ],
+      "paletteArea": "optional-side",
+      "recommendedUse": "Renovation inspiration.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "interior-shopping-direction",
+      "name": "Interior Shopping Direction",
+      "group": "Interior Magazine",
+      "productTypes": [
+        "interior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "shoppingCategories"
+      ],
+      "optionalFields": [
+        "intro",
+        "budgetNotes",
+        "palette"
+      ],
+      "layoutIntent": "Non-brand shopping guidance page.",
+      "imageArea": "none-or-small-icons",
+      "textAreas": [
+        "title",
+        "intro",
+        "shoppingCategories",
+        "budgetNotes"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Helps buyer recreate look without exact product links.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "interior-style-checklist",
+      "name": "Interior Style Checklist",
+      "group": "Interior Magazine",
+      "productTypes": [
+        "interior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "items"
+      ],
+      "optionalFields": [
+        "intro",
+        "heroImage"
+      ],
+      "layoutIntent": "Interior checklist page.",
+      "imageArea": "optional-small",
+      "textAreas": [
+        "title",
+        "intro",
+        "items"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Bonus checklist.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "interior-palette-deep-dive",
+      "name": "Interior Palette Deep Dive",
+      "group": "Interior Magazine",
+      "productTypes": [
+        "interior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "palette",
+        "usageNotes"
+      ],
+      "optionalFields": [
+        "heroImage",
+        "materials"
+      ],
+      "layoutIntent": "Palette page explaining how to use colors.",
+      "imageArea": "optional-side",
+      "textAreas": [
+        "title",
+        "usageNotes",
+        "materials"
+      ],
+      "paletteArea": "large",
+      "recommendedUse": "Color education page.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "interior-materials-library",
+      "name": "Interior Materials Library",
+      "group": "Interior Magazine",
+      "productTypes": [
+        "interior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "materials"
+      ],
+      "optionalFields": [
+        "images",
+        "notes"
+      ],
+      "layoutIntent": "Material library page with swatches or labels.",
+      "imageArea": "grid-or-list",
+      "textAreas": [
+        "title",
+        "materials",
+        "notes"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Premium bonus content.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "interior-final-summary",
+      "name": "Interior Final Summary",
+      "group": "Interior Magazine",
+      "productTypes": [
+        "interior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "summary",
+        "keyTakeaways"
+      ],
+      "optionalFields": [
+        "heroImage",
+        "nextSteps"
+      ],
+      "layoutIntent": "Closing summary page.",
+      "imageArea": "optional-top",
+      "textAreas": [
+        "title",
+        "summary",
+        "keyTakeaways",
+        "nextSteps"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "End of guide.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-cover-luxury",
+      "name": "Recipe Cover Luxury",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "subtitle",
+        "heroImage"
+      ],
+      "optionalFields": [
+        "author",
+        "year",
+        "tagline"
+      ],
+      "layoutIntent": "Premium food ebook cover.",
+      "imageArea": "full-bleed-or-large",
+      "textAreas": [
+        "title",
+        "subtitle",
+        "tagline"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Recipe ebook cover.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-intro-editorial",
+      "name": "Recipe Intro Editorial",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "body"
+      ],
+      "optionalFields": [
+        "heroImage",
+        "quote",
+        "authorNote"
+      ],
+      "layoutIntent": "Editorial intro for recipe ebook.",
+      "imageArea": "optional-side",
+      "textAreas": [
+        "title",
+        "body",
+        "quote"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Welcome / philosophy page.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-index",
+      "name": "Recipe Index",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "recipes"
+      ],
+      "optionalFields": [
+        "categories",
+        "intro"
+      ],
+      "layoutIntent": "Recipe overview with categories and page numbers.",
+      "imageArea": "optional-thumbnails",
+      "textAreas": [
+        "title",
+        "intro",
+        "recipes"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Recipe TOC.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-category-divider",
+      "name": "Recipe Category Divider",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title"
+      ],
+      "optionalFields": [
+        "subtitle",
+        "heroImage",
+        "categoryDescription"
+      ],
+      "layoutIntent": "Category divider with optional hero food image.",
+      "imageArea": "full-or-top",
+      "textAreas": [
+        "title",
+        "subtitle",
+        "categoryDescription"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Breakfast/lunch/dinner divider.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-full-hero",
+      "name": "Recipe Full Hero",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "heroImage",
+        "intro",
+        "prepTime",
+        "cookTime",
+        "totalTime",
+        "servings",
+        "ingredients",
+        "steps"
+      ],
+      "optionalFields": [
+        "difficulty",
+        "notes",
+        "nutrition",
+        "tags"
+      ],
+      "layoutIntent": "Hero image recipe layout with structured recipe data.",
+      "imageArea": "top-large",
+      "textAreas": [
+        "title",
+        "intro",
+        "ingredients",
+        "steps",
+        "notes"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Main recipe page.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-split-detail",
+      "name": "Recipe Split Detail",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "heroImage",
+        "ingredients",
+        "steps"
+      ],
+      "optionalFields": [
+        "intro",
+        "prepTime",
+        "cookTime",
+        "servings",
+        "notes"
+      ],
+      "layoutIntent": "Split image/content recipe page.",
+      "imageArea": "left-or-top",
+      "textAreas": [
+        "ingredients",
+        "steps",
+        "notes"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Text-heavy recipes.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-minimal-card",
+      "name": "Recipe Minimal Card",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "ingredients",
+        "steps"
+      ],
+      "optionalFields": [
+        "heroImage",
+        "prepTime",
+        "servings",
+        "notes"
+      ],
+      "layoutIntent": "Compact recipe card layout.",
+      "imageArea": "optional-small",
+      "textAreas": [
+        "title",
+        "ingredients",
+        "steps"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Quick recipes or bonus recipes.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-photo-story",
+      "name": "Recipe Photo Story",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "images",
+        "steps"
+      ],
+      "optionalFields": [
+        "intro",
+        "tips"
+      ],
+      "layoutIntent": "Multi-image step-by-step recipe story.",
+      "imageArea": "multi-image-vertical",
+      "textAreas": [
+        "title",
+        "steps",
+        "tips"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Process-focused recipes.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-nutrition-page",
+      "name": "Recipe Nutrition Page",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "nutrition"
+      ],
+      "optionalFields": [
+        "heroImage",
+        "notes",
+        "macroSummary"
+      ],
+      "layoutIntent": "Nutrition-focused page.",
+      "imageArea": "optional-side",
+      "textAreas": [
+        "title",
+        "nutrition",
+        "macroSummary",
+        "notes"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Health/fitness recipe ebooks.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-shopping-list",
+      "name": "Recipe Shopping List",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "items"
+      ],
+      "optionalFields": [
+        "intro",
+        "categories"
+      ],
+      "layoutIntent": "Shopping list page.",
+      "imageArea": "none",
+      "textAreas": [
+        "title",
+        "intro",
+        "items",
+        "categories"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Bonus grocery list.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-meal-plan",
+      "name": "Recipe Meal Plan",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "days"
+      ],
+      "optionalFields": [
+        "intro",
+        "notes"
+      ],
+      "layoutIntent": "Weekly meal plan page.",
+      "imageArea": "table",
+      "textAreas": [
+        "title",
+        "intro",
+        "days",
+        "notes"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Bonus meal plan.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-tips-and-swaps",
+      "name": "Recipe Tips And Swaps",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "tips"
+      ],
+      "optionalFields": [
+        "heroImage",
+        "swaps",
+        "notes"
+      ],
+      "layoutIntent": "Cooking tips and ingredient swaps.",
+      "imageArea": "optional-small",
+      "textAreas": [
+        "title",
+        "tips",
+        "swaps",
+        "notes"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Bonus practical page.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "recipe-outro-checklist",
+      "name": "Recipe Outro Checklist",
+      "group": "Recipe Ebook",
+      "productTypes": [
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "items"
+      ],
+      "optionalFields": [
+        "intro"
+      ],
+      "layoutIntent": "End checklist for recipe ebook.",
+      "imageArea": "none",
+      "textAreas": [
+        "title",
+        "intro",
+        "items"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Final page or bonus.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "exterior-cover-editorial",
+      "name": "Exterior Cover Editorial",
+      "group": "Exterior Magazine",
+      "productTypes": [
+        "exterior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "subtitle",
+        "heroImage"
+      ],
+      "optionalFields": [
+        "year",
+        "tagline"
+      ],
+      "layoutIntent": "Premium exterior magazine cover.",
+      "imageArea": "top-large-or-full",
+      "textAreas": [
+        "title",
+        "subtitle",
+        "tagline"
+      ],
+      "paletteArea": "optional-dots",
+      "recommendedUse": "Exterior cover.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "exterior-concept-v1",
+      "name": "Exterior Concept V1",
+      "group": "Exterior Magazine",
+      "productTypes": [
+        "exterior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "subtitle",
+        "heroImage",
+        "designConcept",
+        "palette",
+        "materials",
+        "designNotes"
+      ],
+      "optionalFields": [
+        "maintenanceNotes",
+        "plantingNotes",
+        "styleTags"
+      ],
+      "layoutIntent": "Exterior concept page with facade/garden/patio image.",
+      "imageArea": "top-large",
+      "textAreas": [
+        "title",
+        "subtitle",
+        "designConcept",
+        "designNotes"
+      ],
+      "paletteArea": "right-column",
+      "recommendedUse": "Main exterior concept.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "exterior-facade-concept",
+      "name": "Facade Concept",
+      "group": "Exterior Magazine",
+      "productTypes": [
+        "exterior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "heroImage",
+        "facadeNotes",
+        "palette",
+        "materials"
+      ],
+      "optionalFields": [
+        "subtitle",
+        "lightingNotes",
+        "maintenanceNotes"
+      ],
+      "layoutIntent": "Facade-focused concept page.",
+      "imageArea": "top-large",
+      "textAreas": [
+        "title",
+        "facadeNotes",
+        "lightingNotes",
+        "maintenanceNotes"
+      ],
+      "paletteArea": "right-column",
+      "recommendedUse": "House facade styling.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "exterior-garden-concept",
+      "name": "Garden Concept",
+      "group": "Exterior Magazine",
+      "productTypes": [
+        "exterior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "heroImage",
+        "gardenNotes",
+        "plantingNotes",
+        "palette"
+      ],
+      "optionalFields": [
+        "materials",
+        "maintenanceNotes"
+      ],
+      "layoutIntent": "Garden design concept page.",
+      "imageArea": "top-large",
+      "textAreas": [
+        "title",
+        "gardenNotes",
+        "plantingNotes",
+        "maintenanceNotes"
+      ],
+      "paletteArea": "right-column",
+      "recommendedUse": "Garden inspiration.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "exterior-patio-concept",
+      "name": "Patio / Terrace Concept",
+      "group": "Exterior Magazine",
+      "productTypes": [
+        "exterior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "heroImage",
+        "patioNotes",
+        "materials",
+        "palette"
+      ],
+      "optionalFields": [
+        "furnitureNotes",
+        "lightingNotes"
+      ],
+      "layoutIntent": "Patio or outdoor lounge page.",
+      "imageArea": "top-large",
+      "textAreas": [
+        "title",
+        "patioNotes",
+        "furnitureNotes",
+        "lightingNotes"
+      ],
+      "paletteArea": "right-column",
+      "recommendedUse": "Outdoor seating areas.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "exterior-material-palette",
+      "name": "Exterior Material Palette",
+      "group": "Exterior Magazine",
+      "productTypes": [
+        "exterior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "palette",
+        "materials"
+      ],
+      "optionalFields": [
+        "heroImage",
+        "notes"
+      ],
+      "layoutIntent": "Material and color palette for exterior projects.",
+      "imageArea": "optional-side",
+      "textAreas": [
+        "title",
+        "materials",
+        "notes"
+      ],
+      "paletteArea": "large",
+      "recommendedUse": "Palette page.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "exterior-lighting-plan",
+      "name": "Exterior Lighting Plan",
+      "group": "Exterior Magazine",
+      "productTypes": [
+        "exterior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "lightingNotes"
+      ],
+      "optionalFields": [
+        "heroImage",
+        "zones",
+        "materials"
+      ],
+      "layoutIntent": "Outdoor lighting strategy page.",
+      "imageArea": "optional-side",
+      "textAreas": [
+        "title",
+        "lightingNotes",
+        "zones"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Lighting-focused exterior ebook.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "exterior-planting-scheme",
+      "name": "Planting Scheme",
+      "group": "Exterior Magazine",
+      "productTypes": [
+        "exterior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "plantingNotes",
+        "plants"
+      ],
+      "optionalFields": [
+        "heroImage",
+        "palette",
+        "maintenanceNotes"
+      ],
+      "layoutIntent": "Planting list/scheme page.",
+      "imageArea": "optional-grid",
+      "textAreas": [
+        "title",
+        "plantingNotes",
+        "plants",
+        "maintenanceNotes"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Garden/landscape product.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "exterior-maintenance-notes",
+      "name": "Exterior Maintenance Notes",
+      "group": "Exterior Magazine",
+      "productTypes": [
+        "exterior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "maintenanceNotes"
+      ],
+      "optionalFields": [
+        "materials",
+        "seasonalChecklist"
+      ],
+      "layoutIntent": "Maintenance and care page.",
+      "imageArea": "none-or-small",
+      "textAreas": [
+        "title",
+        "maintenanceNotes",
+        "seasonalChecklist"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Practical bonus.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "exterior-summary",
+      "name": "Exterior Summary",
+      "group": "Exterior Magazine",
+      "productTypes": [
+        "exterior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "summary",
+        "keyTakeaways"
+      ],
+      "optionalFields": [
+        "heroImage",
+        "nextSteps"
+      ],
+      "layoutIntent": "Closing summary page.",
+      "imageArea": "optional-top",
+      "textAreas": [
+        "title",
+        "summary",
+        "keyTakeaways",
+        "nextSteps"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Final page.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "guide-cover",
+      "name": "Guide Cover",
+      "group": "General Ebook",
+      "productTypes": [
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "subtitle"
+      ],
+      "optionalFields": [
+        "heroImage",
+        "author",
+        "year"
+      ],
+      "layoutIntent": "Clean general ebook cover.",
+      "imageArea": "optional",
+      "textAreas": [
+        "title",
+        "subtitle"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "General ebook cover.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "chapter-divider",
+      "name": "Chapter Divider",
+      "group": "General Ebook",
+      "productTypes": [
+        "general-ebook",
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title"
+      ],
+      "optionalFields": [
+        "subtitle",
+        "chapterNumber",
+        "heroImage"
+      ],
+      "layoutIntent": "Chapter divider page.",
+      "imageArea": "optional-full",
+      "textAreas": [
+        "title",
+        "subtitle",
+        "chapterNumber"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Chapter breaks.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "guide-text-page",
+      "name": "Guide Text Page",
+      "group": "General Ebook",
+      "productTypes": [
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "body"
+      ],
+      "optionalFields": [
+        "quote",
+        "heroImage",
+        "keyTakeaways"
+      ],
+      "layoutIntent": "Text-focused ebook page.",
+      "imageArea": "optional-small-or-top",
+      "textAreas": [
+        "title",
+        "body",
+        "quote",
+        "keyTakeaways"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Core article page.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "guide-two-column-text",
+      "name": "Two Column Text Page",
+      "group": "General Ebook",
+      "productTypes": [
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "leftBody",
+        "rightBody"
+      ],
+      "optionalFields": [
+        "quote",
+        "heroImage"
+      ],
+      "layoutIntent": "Editorial two-column text page.",
+      "imageArea": "optional-top",
+      "textAreas": [
+        "title",
+        "leftBody",
+        "rightBody",
+        "quote"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Text-heavy premium guides.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "guide-image-quote",
+      "name": "Image + Quote Page",
+      "group": "General Ebook",
+      "productTypes": [
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "heroImage",
+        "quote"
+      ],
+      "optionalFields": [
+        "body",
+        "credit"
+      ],
+      "layoutIntent": "Large image with quote/callout.",
+      "imageArea": "large",
+      "textAreas": [
+        "title",
+        "quote",
+        "body",
+        "credit"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Visual break.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "guide-checklist",
+      "name": "Guide Checklist",
+      "group": "General Ebook",
+      "productTypes": [
+        "general-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "recipe-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "items"
+      ],
+      "optionalFields": [
+        "intro"
+      ],
+      "layoutIntent": "Clean checklist page.",
+      "imageArea": "none-or-small",
+      "textAreas": [
+        "title",
+        "intro",
+        "items"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Checklist.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "guide-workbook-page",
+      "name": "Workbook Page",
+      "group": "General Ebook",
+      "productTypes": [
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "prompts"
+      ],
+      "optionalFields": [
+        "intro",
+        "notes"
+      ],
+      "layoutIntent": "Printable workbook / fill-in prompts.",
+      "imageArea": "none",
+      "textAreas": [
+        "title",
+        "intro",
+        "prompts",
+        "notes"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Worksheets and planners.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "guide-comparison-table",
+      "name": "Comparison Table",
+      "group": "General Ebook",
+      "productTypes": [
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "table"
+      ],
+      "optionalFields": [
+        "intro",
+        "notes"
+      ],
+      "layoutIntent": "Comparison table page.",
+      "imageArea": "table",
+      "textAreas": [
+        "title",
+        "intro",
+        "table",
+        "notes"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Decision guides.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "guide-summary",
+      "name": "Guide Summary",
+      "group": "General Ebook",
+      "productTypes": [
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "summary",
+        "keyTakeaways"
+      ],
+      "optionalFields": [
+        "nextSteps"
+      ],
+      "layoutIntent": "Summary page.",
+      "imageArea": "none-or-small",
+      "textAreas": [
+        "title",
+        "summary",
+        "keyTakeaways",
+        "nextSteps"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Closing content.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "guide-next-steps",
+      "name": "Next Steps / CTA Page",
+      "group": "General Ebook",
+      "productTypes": [
+        "general-ebook",
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "nextSteps"
+      ],
+      "optionalFields": [
+        "body",
+        "website",
+        "socials"
+      ],
+      "layoutIntent": "Final next steps page.",
+      "imageArea": "none-or-small",
+      "textAreas": [
+        "title",
+        "body",
+        "nextSteps",
+        "website",
+        "socials"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "End of product.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "bonus-read-me",
+      "name": "Read Me First",
+      "group": "Bonus / Utility",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "body"
+      ],
+      "optionalFields": [
+        "supportEmail",
+        "usageTerms"
+      ],
+      "layoutIntent": "Customer read-me page.",
+      "imageArea": "none",
+      "textAreas": [
+        "title",
+        "body",
+        "usageTerms",
+        "supportEmail"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Customer ZIP readme.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "bonus-license-disclaimer",
+      "name": "License / Disclaimer",
+      "group": "Bonus / Utility",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "body"
+      ],
+      "optionalFields": [
+        "commercialUse",
+        "refundPolicy"
+      ],
+      "layoutIntent": "License/disclaimer page.",
+      "imageArea": "none",
+      "textAreas": [
+        "title",
+        "body",
+        "commercialUse",
+        "refundPolicy"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Digital download disclaimer.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "bonus-contact-sheet",
+      "name": "Contact Sheet",
+      "group": "Bonus / Utility",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": false,
+      "requiredFields": [
+        "title",
+        "pageImages"
+      ],
+      "optionalFields": [
+        "notes"
+      ],
+      "layoutIntent": "Contact sheet generated from page previews.",
+      "imageArea": "grid",
+      "textAreas": [
+        "title",
+        "notes"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "QC / seller pack.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "bonus-qc-report",
+      "name": "QC Report",
+      "group": "Bonus / Utility",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": true,
+      "requiredFields": [
+        "title",
+        "checks"
+      ],
+      "optionalFields": [
+        "warnings",
+        "errors"
+      ],
+      "layoutIntent": "Validation report page/file.",
+      "imageArea": "none",
+      "textAreas": [
+        "title",
+        "checks",
+        "warnings",
+        "errors"
+      ],
+      "paletteArea": "none",
+      "recommendedUse": "Export QC.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "etsy-main-cover-mockup",
+      "name": "Etsy Main Cover Mockup",
+      "group": "Etsy Listing Visuals",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": true,
+      "requiredFields": [
+        "productTitle",
+        "coverImage"
+      ],
+      "optionalFields": [
+        "backgroundImage",
+        "brandText",
+        "colors"
+      ],
+      "layoutIntent": "Main thumbnail with premium book mockup.",
+      "imageArea": "etsy-image",
+      "textAreas": [
+        "headline",
+        "subtext"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Etsy listing visual.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "etsy-whats-included",
+      "name": "Etsy What's Included",
+      "group": "Etsy Listing Visuals",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": true,
+      "requiredFields": [
+        "items"
+      ],
+      "optionalFields": [
+        "backgroundImage",
+        "brandText",
+        "colors"
+      ],
+      "layoutIntent": "Show what's included in the customer download.",
+      "imageArea": "etsy-image",
+      "textAreas": [
+        "headline",
+        "subtext"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Etsy listing visual.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "etsy-inside-preview",
+      "name": "Etsy Inside Preview",
+      "group": "Etsy Listing Visuals",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": true,
+      "requiredFields": [
+        "pageImages"
+      ],
+      "optionalFields": [
+        "backgroundImage",
+        "brandText",
+        "colors"
+      ],
+      "layoutIntent": "Show 3\u20136 internal page previews.",
+      "imageArea": "etsy-image",
+      "textAreas": [
+        "headline",
+        "subtext"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Etsy listing visual.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "etsy-perfect-for",
+      "name": "Etsy Perfect For",
+      "group": "Etsy Listing Visuals",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": true,
+      "requiredFields": [
+        "audiences"
+      ],
+      "optionalFields": [
+        "backgroundImage",
+        "brandText",
+        "colors"
+      ],
+      "layoutIntent": "Use-case image.",
+      "imageArea": "etsy-image",
+      "textAreas": [
+        "headline",
+        "subtext"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Etsy listing visual.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "etsy-style-grid",
+      "name": "Etsy Style Grid",
+      "group": "Etsy Listing Visuals",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": true,
+      "requiredFields": [
+        "pageImages",
+        "labels"
+      ],
+      "optionalFields": [
+        "backgroundImage",
+        "brandText",
+        "colors"
+      ],
+      "layoutIntent": "Grid of different styles/recipes/concepts.",
+      "imageArea": "etsy-image",
+      "textAreas": [
+        "headline",
+        "subtext"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Etsy listing visual.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "etsy-palette-preview",
+      "name": "Etsy Palette Preview",
+      "group": "Etsy Listing Visuals",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": true,
+      "requiredFields": [
+        "palette",
+        "materials"
+      ],
+      "optionalFields": [
+        "backgroundImage",
+        "brandText",
+        "colors"
+      ],
+      "layoutIntent": "Highlight palettes/materials.",
+      "imageArea": "etsy-image",
+      "textAreas": [
+        "headline",
+        "subtext"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Etsy listing visual.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "etsy-digital-download-disclaimer",
+      "name": "Etsy Digital Download Disclaimer",
+      "group": "Etsy Listing Visuals",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": true,
+      "requiredFields": [
+        "disclaimerText"
+      ],
+      "optionalFields": [
+        "backgroundImage",
+        "brandText",
+        "colors"
+      ],
+      "layoutIntent": "Clarify no physical item shipped.",
+      "imageArea": "etsy-image",
+      "textAreas": [
+        "headline",
+        "subtext"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Etsy listing visual.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "etsy-bonus-files",
+      "name": "Etsy Bonus Files",
+      "group": "Etsy Listing Visuals",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": true,
+      "requiredFields": [
+        "bonusItems"
+      ],
+      "optionalFields": [
+        "backgroundImage",
+        "brandText",
+        "colors"
+      ],
+      "layoutIntent": "Show bonus checklist/readme etc.",
+      "imageArea": "etsy-image",
+      "textAreas": [
+        "headline",
+        "subtext"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Etsy listing visual.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "etsy-how-it-works",
+      "name": "Etsy How It Works",
+      "group": "Etsy Listing Visuals",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": true,
+      "requiredFields": [
+        "steps"
+      ],
+      "optionalFields": [
+        "backgroundImage",
+        "brandText",
+        "colors"
+      ],
+      "layoutIntent": "Explain download/use workflow.",
+      "imageArea": "etsy-image",
+      "textAreas": [
+        "headline",
+        "subtext"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Etsy listing visual.",
+      "visualNotes": "",
+      "validationNotes": []
+    },
+    {
+      "id": "etsy-final-cta",
+      "name": "Etsy Final CTA",
+      "group": "Etsy Listing Visuals",
+      "productTypes": [
+        "recipe-ebook",
+        "interior-magazine",
+        "exterior-magazine",
+        "general-ebook"
+      ],
+      "pageRole": "content",
+      "outputOnly": true,
+      "requiredFields": [
+        "headline",
+        "subtext"
+      ],
+      "optionalFields": [
+        "backgroundImage",
+        "brandText",
+        "colors"
+      ],
+      "layoutIntent": "Final sales image.",
+      "imageArea": "etsy-image",
+      "textAreas": [
+        "headline",
+        "subtext"
+      ],
+      "paletteArea": "optional",
+      "recommendedUse": "Etsy listing visual.",
+      "visualNotes": "",
+      "validationNotes": []
+    }
+  ]
+}

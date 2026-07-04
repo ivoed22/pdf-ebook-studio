@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Read(//c/Users/IVOLAD/AppData/Local/Temp/claude/C--Users-IVOLAD-Claude-APPS-E-book-template-builder/b0d10bec-a98e-48fc-a3b7-723b24c6e6f4/scratchpad/pack/pdf_ebook_studio_fable_pack_v2/templates/**)",
+      "Bash(node -e ' *)",
+      "Bash(sed 's/[\", ]*//g')"
+    ]
+  }
+}
