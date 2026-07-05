@@ -3,74 +3,84 @@ import { useStudio } from "../store/useStudio";
 import {
   exportContactSheet,
   exportCustomerZip,
+  exportEtsyVisuals,
   exportFinalPdf,
   exportPagePreviews,
   exportSellerZip,
 } from "../core/export/packs";
 import { exportProjectJson } from "../core/export/projectJson";
 import type { Language } from "../types/project";
+import { useT, type StringKey } from "../i18n/strings";
+import { toast } from "./kit/Toaster";
+import { Icon } from "./kit/Icon";
 
 export default function ExportPanel({ errors }: { errors: number }) {
   const project = useStudio((s) => s.project);
   const images = useStudio((s) => s.images);
+  const t = useT();
   const [busy, setBusy] = useState(false);
-  const [step, setStep] = useState("");
-  const [failure, setFailure] = useState("");
+  const [steps, setSteps] = useState<string[]>([]);
+  const [jobLabel, setJobLabel] = useState("");
   const [language, setLanguage] = useState<Language | "all">("all");
 
   if (!project) return null;
 
-  const languages: Language[] =
-    language === "all" ? project.languageVersions : [language];
+  const languages: Language[] = language === "all" ? project.languageVersions : [language];
 
-  async function run(job: () => Promise<void>) {
+  async function run(label: string, job: (onProgress: (s: string) => void) => Promise<void>) {
     setBusy(true);
-    setFailure("");
+    setJobLabel(label);
+    setSteps([]);
     try {
-      await job();
-      setStep("Done — check your downloads.");
+      await job((s) => setSteps((prev) => [...prev, s]));
+      toast.success(`${label} ✓ — ${t("exportDone")}`);
     } catch (e) {
-      setFailure(e instanceof Error ? e.message : String(e));
-      setStep("");
+      toast.error(t("exportFailed", { msg: e instanceof Error ? e.message : String(e) }));
     } finally {
       setBusy(false);
+      setJobLabel("");
+      setSteps([]);
     }
   }
 
   const p = project;
-  const onProgress = (s: string) => setStep(s);
 
-  const exports: { label: string; hint: string; job: () => Promise<void> }[] = [
+  const exports: { labelKey: StringKey; hintKey: StringKey; job: (op: (s: string) => void) => Promise<void> }[] = [
     {
-      label: "Final PDF",
-      hint: "High-quality vector A4 PDF — the file your customer receives.",
-      job: async () => {
-        for (const lang of languages) await exportFinalPdf(p, images, lang, onProgress);
+      labelKey: "finalPdf",
+      hintKey: "finalPdfHint",
+      job: async (op) => {
+        for (const lang of languages) await exportFinalPdf(p, images, lang, op);
       },
     },
     {
-      label: "Page previews (ZIP)",
-      hint: "Every page as a ~200 DPI JPG, for listings and social posts.",
-      job: async () => {
-        for (const lang of languages) await exportPagePreviews(p, images, lang, onProgress);
+      labelKey: "pagePreviews",
+      hintKey: "pagePreviewsHint",
+      job: async (op) => {
+        for (const lang of languages) await exportPagePreviews(p, images, lang, op);
       },
     },
     {
-      label: "Contact sheet (PDF)",
-      hint: "All pages as thumbnails on A4 overview sheets.",
-      job: async () => {
-        for (const lang of languages) await exportContactSheet(p, images, lang, onProgress);
+      labelKey: "contactSheet",
+      hintKey: "contactSheetHint",
+      job: async (op) => {
+        for (const lang of languages) await exportContactSheet(p, images, lang, op);
       },
     },
     {
-      label: "Customer ZIP",
-      hint: "Final PDF(s) + Read-Me — upload this to Etsy as the product file.",
-      job: () => exportCustomerZip(p, images, languages, onProgress),
+      labelKey: "etsyImages",
+      hintKey: "etsyImagesHint",
+      job: (op) => exportEtsyVisuals(p, images, languages, op),
     },
     {
-      label: "Seller ZIP / Etsy Listing Pack",
-      hint: "PDFs, previews, contact sheet, listing title/description/tags, photos, QC reports.",
-      job: () => exportSellerZip(p, images, languages, onProgress),
+      labelKey: "customerZip",
+      hintKey: "customerZipHint",
+      job: (op) => exportCustomerZip(p, images, languages, op),
+    },
+    {
+      labelKey: "sellerZip",
+      hintKey: "sellerZipHint",
+      job: (op) => exportSellerZip(p, images, languages, op),
     },
   ];
 
@@ -78,23 +88,22 @@ export default function ExportPanel({ errors }: { errors: number }) {
     <div className="p-4">
       {errors > 0 && (
         <div className="rounded-md border border-red-200 bg-red-50 p-3 mb-4 text-xs text-red-700">
-          <span className="font-semibold">{errors} QC error(s) open.</span> You can still export, but fix
-          them first for a sellable result — see the QC tab.
+          {t("qcOpenErrors", { n: errors })}
         </div>
       )}
 
       {project.languageVersions.length > 1 && (
         <>
-          <label className="label">Language version to export</label>
+          <label className="label">{t("exportLangLabel")}</label>
           <select
             className="input mb-4 cursor-pointer"
             value={language}
             onChange={(e) => setLanguage(e.target.value as Language | "all")}
           >
-            <option value="all">All languages (separate files)</option>
+            <option value="all">{t("allLanguages")}</option>
             {project.languageVersions.map((lang) => (
               <option key={lang} value={lang}>
-                {lang === "en" ? "English" : "Nederlands"} only
+                {t("onlyLang", { lang: lang === "en" ? "English" : "Nederlands" })}
               </option>
             ))}
           </select>
@@ -103,14 +112,18 @@ export default function ExportPanel({ errors }: { errors: number }) {
 
       <div className="space-y-2">
         {exports.map((e) => (
-          <div key={e.label} className="rounded-md border border-stone-200 p-3">
+          <div key={e.labelKey} className="rounded-md border border-stone-200 p-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-stone-800">{e.label}</div>
-                <div className="text-[11px] text-stone-400 leading-snug mt-0.5">{e.hint}</div>
+                <div className="text-sm font-semibold text-stone-800">{t(e.labelKey)}</div>
+                <div className="text-[11px] text-stone-400 leading-snug mt-0.5">{t(e.hintKey)}</div>
               </div>
-              <button className="btn-primary text-xs shrink-0" disabled={busy} onClick={() => void run(e.job)}>
-                Export
+              <button
+                className="btn-primary text-xs shrink-0"
+                disabled={busy}
+                onClick={() => void run(t(e.labelKey), e.job)}
+              >
+                {t("exportBtn")}
               </button>
             </div>
           </div>
@@ -118,37 +131,48 @@ export default function ExportPanel({ errors }: { errors: number }) {
       </div>
 
       <div className="mt-5 pt-4 border-t border-stone-200">
-        <div className="panel-title mb-2">Project backup</div>
+        <div className="panel-title mb-2">{t("projectBackup")}</div>
         <div className="flex gap-2">
           <button
             className="btn-secondary text-xs"
             disabled={busy}
-            onClick={() => void run(() => exportProjectJson(p, images, false))}
+            onClick={() => void run(t("exportProjectJson"), () => exportProjectJson(p, images, false))}
           >
-            Export project JSON
+            {t("exportProjectJson")}
           </button>
           <button
             className="btn-secondary text-xs"
             disabled={busy}
-            onClick={() => void run(() => exportProjectJson(p, images, true))}
+            onClick={() => void run(t("exportWithImages"), () => exportProjectJson(p, images, true))}
           >
-            Export with images
+            {t("exportWithImages")}
           </button>
         </div>
-        <p className="text-[11px] text-stone-400 mt-1.5">
-          Re-import from the dashboard. "With images" embeds all uploads (bigger file, fully portable).
-        </p>
+        <p className="text-[11px] text-stone-400 mt-1.5">{t("backupHint")}</p>
       </div>
 
-      {(busy || step) && (
-        <p className="text-xs text-stone-500 mt-4">
-          {busy && <span className="inline-block animate-pulse mr-1.5">●</span>}
-          {step}
-        </p>
-      )}
-      {failure && (
-        <div className="rounded-md border border-red-300 bg-red-50 p-3 mt-3 text-xs text-red-700">
-          Export failed: {failure}
+      {busy && (
+        <div className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="h-4 w-4 rounded-full border-2 border-stone-300 border-t-amber-700 animate-spin" />
+              <h3 className="font-display font-semibold text-stone-900">
+                {t("exporting")}: {jobLabel}
+              </h3>
+            </div>
+            <div className="max-h-52 overflow-y-auto">
+              {steps.map((s, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs text-stone-600 py-0.5">
+                  {i === steps.length - 1 ? (
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-600 animate-pulse shrink-0" />
+                  ) : (
+                    <Icon name="check" size={11} className="text-emerald-600 shrink-0" />
+                  )}
+                  {s}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

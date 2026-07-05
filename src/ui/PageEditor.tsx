@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { useStudio } from "../store/useStudio";
-import { allTemplates, getTemplate, templatesForProductType } from "../core/templates/registry";
+import { getTemplate, rendererFor } from "../core/templates/registry";
 import { suggestMatch } from "../core/assets/imageStore";
 import type { FieldValue, PaletteColor } from "../types/project";
 import { LANGUAGES } from "../types/project";
+import { useT } from "../i18n/strings";
+import TemplatePicker from "./TemplatePicker";
+import type { ImageFocus } from "../pdf/components";
 
 /** Fields edited as one-item-per-line lists. */
 const LIST_FIELDS = new Set([
@@ -37,6 +41,14 @@ const LONG_FIELDS = new Set([
 
 const IMAGE_FIELDS = new Set(["heroImage", "imageA", "imageB"]);
 
+const FOCUS_OPTIONS: { value: ImageFocus; labelKey: "focusTop" | "focusLeft" | "focusCenter" | "focusRight" | "focusBottom" }[] = [
+  { value: "top", labelKey: "focusTop" },
+  { value: "left", labelKey: "focusLeft" },
+  { value: "center", labelKey: "focusCenter" },
+  { value: "right", labelKey: "focusRight" },
+  { value: "bottom", labelKey: "focusBottom" },
+];
+
 export default function PageEditor() {
   const project = useStudio((s) => s.project);
   const selectedPageId = useStudio((s) => s.selectedPageId);
@@ -46,19 +58,21 @@ export default function PageEditor() {
   const setPageTemplate = useStudio((s) => s.setPageTemplate);
   const setPageNumber = useStudio((s) => s.setPageNumber);
   const setPageLanguage = useStudio((s) => s.setPageLanguage);
+  const t = useT();
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const page = project?.pages.find((p) => p.id === selectedPageId);
   if (!project || !page) {
-    return <p className="p-4 text-sm text-stone-400">Select a page to edit its content.</p>;
+    return <p className="p-4 text-sm text-stone-400">{t("selectPagePrompt")}</p>;
   }
 
   const template = getTemplate(page.template);
-  const productTemplates = templatesForProductType(project.projectMeta.productType);
-  const templateChoices = productTemplates.length ? productTemplates : allTemplates();
   const required = template?.requiredFields ?? [];
   const optional = template?.optionalFields ?? [];
   const known = new Set([...required, ...optional]);
-  const extraFields = Object.keys(page.fields).filter((f) => !known.has(f));
+  const extraFields = Object.keys(page.fields).filter(
+    (f) => !known.has(f) && !f.endsWith("Focus"),
+  );
   const availableImages = [...images.keys()].sort();
 
   function fieldEditor(field: string, isRequired: boolean) {
@@ -72,6 +86,7 @@ export default function PageEditor() {
       const current = typeof value === "string" ? value : "";
       const missing = current && !images.has(current);
       const suggestion = missing ? suggestMatch(current, availableImages) : undefined;
+      const focus = (page!.fields[`${field}Focus`] as ImageFocus) || "center";
       return (
         <div key={field} className="mb-3">
           <label className="label">
@@ -89,7 +104,7 @@ export default function PageEditor() {
               <select
                 className="input w-9 px-1 shrink-0 cursor-pointer"
                 value=""
-                title="Pick an uploaded image"
+                title={t("pickUploaded")}
                 onChange={(e) => e.target.value && setPageField(page!.id, field, e.target.value)}
               >
                 <option value="">…</option>
@@ -103,16 +118,41 @@ export default function PageEditor() {
           </div>
           {missing && (
             <p className="text-[11px] text-red-600 mt-1">
-              Not uploaded.{" "}
+              {t("notUploaded")}{" "}
               {suggestion && (
                 <button
                   className="underline cursor-pointer"
                   onClick={() => setPageField(page!.id, field, suggestion)}
                 >
-                  Use "{suggestion}"?
+                  {t("useSuggestion", { name: suggestion })}
                 </button>
               )}
             </p>
+          )}
+          {current && !missing && (
+            <div className="mt-1.5 flex items-center gap-1">
+              <span className="text-[10px] uppercase tracking-wider text-stone-400 mr-1">
+                {t("focusPoint")}
+              </span>
+              {FOCUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  title={t(opt.labelKey)}
+                  className={`h-5 w-5 rounded border text-[9px] font-bold cursor-pointer transition-colors ${
+                    focus === opt.value
+                      ? "border-amber-700 bg-amber-100 text-amber-800"
+                      : "border-stone-200 text-stone-400 hover:border-stone-400"
+                  }`}
+                  onClick={() =>
+                    opt.value === "center"
+                      ? removePageField(page!.id, `${field}Focus`)
+                      : setPageField(page!.id, `${field}Focus`, opt.value)
+                  }
+                >
+                  {t(opt.labelKey).slice(0, 1)}
+                </button>
+              ))}
+            </div>
           )}
         </div>
       );
@@ -124,7 +164,7 @@ export default function PageEditor() {
         <div key={field} className="mb-3">
           <label className="label">
             {labelFor(field)} {isRequired && <span className="text-amber-700">*</span>}
-            <span className="normal-case font-normal text-stone-400"> — one per line</span>
+            <span className="normal-case font-normal text-stone-400">{t("onePerLine")}</span>
           </label>
           <textarea
             className="input font-mono text-xs"
@@ -182,7 +222,7 @@ export default function PageEditor() {
 
       <div className="grid grid-cols-3 gap-2 mb-4">
         <div>
-          <label className="label">Page #</label>
+          <label className="label">{t("pageNumber")}</label>
           <input
             className="input"
             type="number"
@@ -192,7 +232,7 @@ export default function PageEditor() {
           />
         </div>
         <div className="col-span-2">
-          <label className="label">Language</label>
+          <label className="label">{t("language")}</label>
           <select
             className="input cursor-pointer"
             value={page.language}
@@ -204,38 +244,36 @@ export default function PageEditor() {
         </div>
       </div>
 
-      <label className="label">Template</label>
-      <select
-        className="input mb-1 cursor-pointer"
-        value={page.template}
-        onChange={(e) => setPageTemplate(page.id, e.target.value)}
+      <label className="label">{t("template")}</label>
+      <button
+        className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-left hover:border-stone-500 transition-colors cursor-pointer mb-1"
+        onClick={() => setPickerOpen(true)}
       >
-        {!templateChoices.some((t) => t.id === page.template) && (
-          <option value={page.template}>{page.template || "(none)"}</option>
-        )}
-        {templateChoices.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.name} — {t.group}
-          </option>
-        ))}
-      </select>
+        <span className="text-sm font-medium text-stone-800">
+          {template?.name ?? page.template ?? "—"}
+        </span>
+        <span className="float-right text-xs text-amber-700 font-semibold">{t("chooseTemplate")}</span>
+        <span className="block text-[10px] text-stone-400 mt-0.5">
+          {template?.group ?? ""} · {rendererFor(page.template)}
+        </span>
+      </button>
       {template && <p className="text-[11px] text-stone-400 mb-4 leading-snug">{template.layoutIntent}</p>}
 
       {required.length > 0 && (
         <>
-          <div className="panel-title mb-2">Required fields</div>
+          <div className="panel-title mb-2">{t("requiredFields")}</div>
           {required.map((f) => fieldEditor(f, true))}
         </>
       )}
       {optional.length > 0 && (
         <>
-          <div className="panel-title mb-2 mt-5">Optional fields</div>
+          <div className="panel-title mb-2 mt-5">{t("optionalFields")}</div>
           {optional.map((f) => fieldEditor(f, false))}
         </>
       )}
       {extraFields.length > 0 && (
         <>
-          <div className="panel-title mb-2 mt-5">Other fields on this page</div>
+          <div className="panel-title mb-2 mt-5">{t("otherFields")}</div>
           {extraFields.map((f) => (
             <div key={f} className="relative">
               {fieldEditor(f, false)}
@@ -243,11 +281,20 @@ export default function PageEditor() {
                 className="absolute right-0 top-0 text-[10px] text-stone-400 hover:text-red-600"
                 onClick={() => removePageField(page.id, f)}
               >
-                remove
+                {t("remove")}
               </button>
             </div>
           ))}
         </>
+      )}
+
+      {pickerOpen && (
+        <TemplatePicker
+          productType={project.projectMeta.productType}
+          current={page.template}
+          onPick={(id) => setPageTemplate(page.id, id)}
+          onClose={() => setPickerOpen(false)}
+        />
       )}
     </div>
   );
@@ -262,6 +309,7 @@ function labelFor(field: string): string {
 function PaletteFieldEditor({ pageId, value }: { pageId: string; value: FieldValue | undefined }) {
   const setPageField = useStudio((s) => s.setPageField);
   const project = useStudio((s) => s.project);
+  const t = useT();
   const colors: PaletteColor[] =
     Array.isArray(value) && value.length && typeof value[0] === "object"
       ? (value as PaletteColor[])
@@ -311,7 +359,7 @@ function PaletteFieldEditor({ pageId, value }: { pageId: string; value: FieldVal
           className="btn-ghost text-xs px-2 py-1"
           onClick={() => update([...colors, { name: `Color ${colors.length + 1}`, hex: "#CCCCCC" }])}
         >
-          + Add color
+          {t("addColor")}
         </button>
         {project && project.palettes.length > 0 && (
           <select
@@ -322,7 +370,7 @@ function PaletteFieldEditor({ pageId, value }: { pageId: string; value: FieldVal
               if (palette) update(palette.colors.map((c) => ({ ...c })));
             }}
           >
-            <option value="">Apply saved palette…</option>
+            <option value="">{t("applySavedPalette")}</option>
             {project.palettes.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}

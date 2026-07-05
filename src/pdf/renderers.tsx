@@ -13,9 +13,11 @@ import {
   PaletteStrip,
   SectionHeading,
   TitleBlock,
+  fieldFocus,
   fieldList,
   fieldPalette,
   fieldStr,
+  focusPosition,
   pageImageUrl,
   totalTextLength,
   type RenderContext,
@@ -52,7 +54,7 @@ function CoverEditorial({ ctx, page }: RendererProps) {
             <Text style={{ fontSize: 7.5, letterSpacing: 2.5, color: c.textMuted }}>{year}</Text>
           ) : null}
         </View>
-        <HeroImage ctx={ctx} filename={fieldStr(page, "heroImage")} height={430} radius={5} />
+        <HeroImage ctx={ctx} filename={fieldStr(page, "heroImage")} focus={fieldFocus(page, "heroImage")} height={430} radius={5} />
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingTop: 26 }}>
           <View style={{ width: 30, height: 1.5, backgroundColor: c.accent, marginBottom: 18 }} />
           <Text
@@ -107,7 +109,7 @@ function CoverFullBleed({ ctx, page }: RendererProps) {
       {url ? (
         <Image
           src={url}
-          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: focusPosition(fieldFocus(page, "heroImage")) }}
         />
       ) : (
         <View
@@ -177,7 +179,7 @@ function HeroTopContent({ ctx, page }: RendererProps) {
 
   return (
     <PageFrame ctx={ctx} page={page}>
-      <HeroImage ctx={ctx} filename={fieldStr(page, "heroImage")} height={272} />
+      <HeroImage ctx={ctx} filename={fieldStr(page, "heroImage")} focus={fieldFocus(page, "heroImage")} height={272} />
       <View style={{ marginTop: 18 }}>
         <TitleBlock ctx={ctx} page={page} />
       </View>
@@ -246,7 +248,7 @@ function SideImageContent({ ctx, page }: RendererProps) {
     <PageFrame ctx={ctx} page={page}>
       <View style={{ flexDirection: "row", gap: 18, flex: 1 }}>
         <View style={{ flex: 1 }}>
-          <HeroImage ctx={ctx} filename={fieldStr(page, "heroImage")} height={560} />
+          <HeroImage ctx={ctx} filename={fieldStr(page, "heroImage")} focus={fieldFocus(page, "heroImage")} height={560} />
           {palette.length ? (
             <View style={{ marginTop: 12 }}>
               <PaletteStrip ctx={ctx} colors={palette} />
@@ -300,7 +302,7 @@ function FullBleedOverlay({ ctx, page }: RendererProps) {
       {url ? (
         <Image
           src={url}
-          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: focusPosition(fieldFocus(page, "heroImage")) }}
         />
       ) : (
         <View
@@ -467,7 +469,7 @@ function TextEditorial({ ctx, page }: RendererProps) {
       <TitleBlock ctx={ctx} page={page} />
       {hero ? (
         <View style={{ marginTop: 14 }}>
-          <HeroImage ctx={ctx} filename={hero} height={190} />
+          <HeroImage ctx={ctx} filename={hero} height={190} focus={fieldFocus(page, "heroImage")} />
         </View>
       ) : null}
       <Divider ctx={ctx} spacing={14} />
@@ -522,7 +524,7 @@ function TwoColumnText({ ctx, page }: RendererProps) {
       <TitleBlock ctx={ctx} page={page} />
       {hero ? (
         <View style={{ marginTop: 12 }}>
-          <HeroImage ctx={ctx} filename={hero} height={150} />
+          <HeroImage ctx={ctx} filename={hero} height={150} focus={fieldFocus(page, "heroImage")} />
         </View>
       ) : null}
       <Divider ctx={ctx} spacing={14} />
@@ -669,7 +671,7 @@ function SectionDivider({ ctx, page }: RendererProps) {
       <PageFrame ctx={ctx} page={page} padded={false}>
         <Image
           src={url}
-          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: focusPosition(fieldFocus(page, "heroImage")) }}
         />
         <View
           style={{
@@ -814,7 +816,7 @@ function ImageQuote({ ctx, page }: RendererProps) {
   const attribution = fieldStr(page, "attribution", "author");
   return (
     <PageFrame ctx={ctx} page={page}>
-      <HeroImage ctx={ctx} filename={fieldStr(page, "heroImage")} height={430} />
+      <HeroImage ctx={ctx} filename={fieldStr(page, "heroImage")} focus={fieldFocus(page, "heroImage")} height={430} />
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 24 }}>
         <Text style={{ fontSize: 22, color: tokens.theme.colors.accent, fontFamily: tokens.font.display }}>
           “
@@ -899,7 +901,7 @@ function RecipeHero({ ctx, page }: RendererProps) {
   const fs = bodySizeForAmount(tokens.size.body, totalTextLength(page), 1700);
   return (
     <PageFrame ctx={ctx} page={page}>
-      <HeroImage ctx={ctx} filename={fieldStr(page, "heroImage")} height={238} />
+      <HeroImage ctx={ctx} filename={fieldStr(page, "heroImage")} focus={fieldFocus(page, "heroImage")} height={238} />
       <View style={{ marginTop: 16 }}>
         <TitleBlock ctx={ctx} page={page} />
       </View>
@@ -962,7 +964,7 @@ function RecipeSplit({ ctx, page }: RendererProps) {
     <PageFrame ctx={ctx} page={page}>
       <View style={{ flexDirection: "row", gap: 18, flex: 1 }}>
         <View style={{ flex: 0.95 }}>
-          <HeroImage ctx={ctx} filename={fieldStr(page, "heroImage")} height={330} />
+          <HeroImage ctx={ctx} filename={fieldStr(page, "heroImage")} focus={fieldFocus(page, "heroImage")} height={330} />
           <View style={{ marginTop: 14 }}>
             <SectionHeading ctx={ctx}>Ingredients</SectionHeading>
             <BulletList ctx={ctx} items={ingredients} size={fs - 0.5} />
@@ -1023,7 +1025,7 @@ function EtsyVisual({ ctx, page }: RendererProps) {
         </View>
         {hero ? (
           <View style={{ marginTop: 16 }}>
-            <HeroImage ctx={ctx} filename={hero} height={300} />
+            <HeroImage ctx={ctx} filename={hero} height={300} focus={fieldFocus(page, "heroImage")} />
           </View>
         ) : null}
         {items.length ? (

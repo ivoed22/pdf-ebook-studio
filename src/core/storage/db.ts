@@ -1,6 +1,12 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { ImageAsset, Project } from "../../types/project";
 
+interface ThumbRecord {
+  projectId: string;
+  updatedAt: string;
+  dataUrl: string;
+}
+
 interface StudioDB extends DBSchema {
   projects: {
     key: string;
@@ -11,17 +17,26 @@ interface StudioDB extends DBSchema {
     value: ImageAsset & { projectId: string };
     indexes: { byProject: string };
   };
+  thumbs: {
+    key: string; // projectId
+    value: ThumbRecord;
+  };
 }
 
 let dbPromise: Promise<IDBPDatabase<StudioDB>> | null = null;
 
 function db(): Promise<IDBPDatabase<StudioDB>> {
   if (!dbPromise) {
-    dbPromise = openDB<StudioDB>("pdf-ebook-studio", 1, {
-      upgrade(d) {
-        d.createObjectStore("projects", { keyPath: "id" });
-        const images = d.createObjectStore("images", { keyPath: ["projectId", "filename"] });
-        images.createIndex("byProject", "projectId");
+    dbPromise = openDB<StudioDB>("pdf-ebook-studio", 2, {
+      upgrade(d, oldVersion) {
+        if (oldVersion < 1) {
+          d.createObjectStore("projects", { keyPath: "id" });
+          const images = d.createObjectStore("images", { keyPath: ["projectId", "filename"] });
+          images.createIndex("byProject", "projectId");
+        }
+        if (oldVersion < 2) {
+          d.createObjectStore("thumbs", { keyPath: "projectId" });
+        }
       },
     });
   }
@@ -55,4 +70,16 @@ export async function loadImages(projectId: string): Promise<ImageAsset[]> {
 
 export async function deleteImage(projectId: string, filename: string): Promise<void> {
   await (await db()).delete("images", [projectId, filename]);
+}
+
+export async function saveThumb(projectId: string, updatedAt: string, dataUrl: string): Promise<void> {
+  await (await db()).put("thumbs", { projectId, updatedAt, dataUrl });
+}
+
+export async function loadThumb(projectId: string): Promise<ThumbRecord | undefined> {
+  return (await db()).get("thumbs", projectId);
+}
+
+export async function deleteThumb(projectId: string): Promise<void> {
+  await (await db()).delete("thumbs", projectId);
 }

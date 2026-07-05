@@ -1,9 +1,18 @@
 import type { ImageAsset, Language, Page, Project } from "../../types/project";
-import { imageFilenamesForPage } from "../../types/project";
+import { IMAGE_FIELDS, IMAGE_LIST_FIELDS, imageFilenamesForPage } from "../../types/project";
 import { RENDERER_MAP, getTemplate, isKnownTemplate } from "../templates/registry";
 import { isValidHex } from "../../pdf/components";
+import { suggestMatch } from "../assets/imageStore";
 
 export type IssueSeverity = "error" | "warning";
+
+/** Machine-applicable remedy attached to a fixable issue. */
+export type IssueFix =
+  | { kind: "renumber"; language: Language }
+  | { kind: "set-page-field"; pageId: string; field: string; value: string }
+  | { kind: "page-palette-hex"; pageId: string; index: number; hex: string }
+  | { kind: "project-palette-hex"; paletteId: string; index: number; hex: string }
+  | { kind: "remove-image"; filename: string };
 
 export interface Issue {
   severity: IssueSeverity;
@@ -12,6 +21,14 @@ export interface Issue {
   pageId?: string;
   pageNumber?: number;
   language?: Language;
+  fix?: IssueFix;
+}
+
+/** Returns a valid uppercase #HEX when the input is merely mis-formatted, else undefined. */
+export function normalizeHex(hex: string): string | undefined {
+  const cleaned = hex.trim().replace(/^#/, "").toUpperCase();
+  if (/^[0-9A-F]{3}$|^[0-9A-F]{6}$|^[0-9A-F]{8}$/.test(cleaned)) return `#${cleaned}`;
+  return undefined;
 }
 
 /** Comfortable character budgets per renderer family for overflow warnings. */
@@ -86,31 +103,60 @@ export function validateProject(project: Project, images: Map<string, ImageAsset
       }
     }
 
-    for (const filename of imageFilenamesForPage(page)) {
+    const available = [...images.keys()];
+    for (const field of IMAGE_FIELDS) {
+      const v = page.fields[field];
+      if (typeof v !== "string" || !v.trim()) continue;
+      const filename = v.trim();
       usedImages.add(filename);
       if (!images.has(filename)) {
+        const suggestion = suggestMatch(filename, available);
         issues.push({
           severity: "error",
           code: "missing-image",
-          message: `Image "${filename}" is referenced but not uploaded.`,
+          message: `Image "${filename}" is referenced but not uploaded.${suggestion ? ` Closest upload: "${suggestion}".` : ""}`,
           ...loc,
+          fix: suggestion
+            ? { kind: "set-page-field", pageId: page.id, field, value: suggestion }
+            : undefined,
         });
+      }
+    }
+    for (const field of IMAGE_LIST_FIELDS) {
+      const v = page.fields[field];
+      if (!Array.isArray(v)) continue;
+      for (const item of v) {
+        if (typeof item !== "string" || !item.trim()) continue;
+        const filename = item.trim();
+        usedImages.add(filename);
+        if (!images.has(filename)) {
+          issues.push({
+            severity: "error",
+            code: "missing-image",
+            message: `Image "${filename}" is referenced but not uploaded.`,
+            ...loc,
+          });
+        }
       }
     }
 
     const palette = page.fields.palette;
     if (Array.isArray(palette) && palette.length && typeof palette[0] === "object") {
       const colors = palette as { name: string; hex: string }[];
-      for (const color of colors) {
+      colors.forEach((color, index) => {
         if (!isValidHex(color.hex)) {
+          const normalized = normalizeHex(color.hex ?? "");
           issues.push({
             severity: "error",
             code: "invalid-hex",
             message: `Palette color "${color.name}" has invalid HEX "${color.hex || "(empty)"}".`,
             ...loc,
+            fix: normalized
+              ? { kind: "page-palette-hex", pageId: page.id, index, hex: normalized }
+              : undefined,
           });
         }
-      }
+      });
       if (colors.length > 0 && colors.length < 3) {
         issues.push({
           severity: "warning",
@@ -147,6 +193,7 @@ export function validateProject(project: Project, images: Map<string, ImageAsset
           code: "duplicate-page-number",
           message: `Page number ${num} is used ${count} times in the ${language.toUpperCase()} version.`,
           language,
+          fix: { kind: "renumber", language },
         });
       }
     }
@@ -158,6 +205,7 @@ export function validateProject(project: Project, images: Map<string, ImageAsset
           code: "broken-sequence",
           message: `Page numbers jump from ${pages[i - 1].pageNumber} to ${pages[i].pageNumber} in the ${language.toUpperCase()} version.`,
           language,
+          fix: { kind: "renumber", language },
         });
       }
     }
@@ -167,6 +215,7 @@ export function validateProject(project: Project, images: Map<string, ImageAsset
         code: "broken-sequence",
         message: `The ${language.toUpperCase()} version starts at page ${pages[0].pageNumber}, not 1.`,
         language,
+        fix: { kind: "renumber", language },
       });
     }
   }
@@ -188,6 +237,7 @@ export function validateProject(project: Project, images: Map<string, ImageAsset
         severity: "warning",
         code: "unused-image",
         message: `Uploaded image "${filename}" is not used on any page.`,
+        fix: { kind: "remove-image", filename },
       });
     }
   }
@@ -208,15 +258,19 @@ export function validateProject(project: Project, images: Map<string, ImageAsset
 
   // --- project-level palettes ---
   for (const palette of project.palettes) {
-    for (const color of palette.colors) {
+    palette.colors.forEach((color, index) => {
       if (!isValidHex(color.hex)) {
+        const normalized = normalizeHex(color.hex ?? "");
         issues.push({
           severity: "error",
           code: "invalid-hex",
           message: `Palette "${palette.name}": color "${color.name}" has invalid HEX "${color.hex || "(empty)"}".`,
+          fix: normalized
+            ? { kind: "project-palette-hex", paletteId: palette.id, index, hex: normalized }
+            : undefined,
         });
       }
-    }
+    });
     if (palette.colors.length < 3) {
       issues.push({
         severity: "warning",

@@ -9,16 +9,18 @@ import {
   type ProductType,
 } from "../types/project";
 import { templatesForProductType } from "../core/templates/registry";
+import { useT, type StringKey } from "../i18n/strings";
 
-const TYPE_INFO: Record<ProductType, { label: string; blurb: string }> = {
-  "recipe-ebook": { label: "Recipe Ebook", blurb: "Cookbooks with ingredients, steps and prep times." },
-  "interior-magazine": { label: "Interior Magazine", blurb: "Room concepts with palettes and materials." },
-  "exterior-magazine": { label: "Exterior Magazine", blurb: "Garden, facade and outdoor living concepts." },
-  "general-ebook": { label: "General Ebook / Guide", blurb: "Chapters, checklists, workbooks and guides." },
+const TYPE_INFO: Record<ProductType, { label: StringKey; blurb: StringKey }> = {
+  "recipe-ebook": { label: "typeRecipe", blurb: "typeRecipeBlurb" },
+  "interior-magazine": { label: "typeInterior", blurb: "typeInteriorBlurb" },
+  "exterior-magazine": { label: "typeExterior", blurb: "typeExteriorBlurb" },
+  "general-ebook": { label: "typeGuide", blurb: "typeGuideBlurb" },
 };
 
 export default function ProjectWizard({ onClose }: { onClose: () => void }) {
   const createProject = useStudio((s) => s.createProject);
+  const t = useT();
   const [title, setTitle] = useState("");
   const [productType, setProductType] = useState<ProductType>("interior-magazine");
   const [languages, setLanguages] = useState<Language[]>(["en"]);
@@ -60,9 +62,9 @@ export default function ProjectWizard({ onClose }: { onClose: () => void }) {
         className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="font-display text-xl font-semibold text-stone-900 mb-5">New project</h2>
+        <h2 className="font-display text-xl font-semibold text-stone-900 mb-5">{t("wizardTitle")}</h2>
 
-        <label className="label">Project title</label>
+        <label className="label">{t("projectTitleLabel")}</label>
         <input
           className="input mb-4"
           autoFocus
@@ -71,25 +73,25 @@ export default function ProjectWizard({ onClose }: { onClose: () => void }) {
           onChange={(e) => setTitle(e.target.value)}
         />
 
-        <label className="label">Product type</label>
+        <label className="label">{t("productType")}</label>
         <div className="grid grid-cols-2 gap-2 mb-4">
-          {PRODUCT_TYPES.map((t) => (
+          {PRODUCT_TYPES.map((pt) => (
             <button
-              key={t}
+              key={pt}
               className={`rounded-md border p-3 text-left transition-colors cursor-pointer ${
-                productType === t
+                productType === pt
                   ? "border-amber-700 bg-amber-50"
                   : "border-stone-200 hover:border-stone-400"
               }`}
-              onClick={() => setProductType(t)}
+              onClick={() => setProductType(pt)}
             >
-              <div className="text-sm font-semibold text-stone-800">{TYPE_INFO[t].label}</div>
-              <div className="text-[11px] text-stone-500 mt-0.5 leading-snug">{TYPE_INFO[t].blurb}</div>
+              <div className="text-sm font-semibold text-stone-800">{t(TYPE_INFO[pt].label)}</div>
+              <div className="text-[11px] text-stone-500 mt-0.5 leading-snug">{t(TYPE_INFO[pt].blurb)}</div>
             </button>
           ))}
         </div>
 
-        <label className="label">Language versions</label>
+        <label className="label">{t("languageVersions")}</label>
         <div className="flex gap-2 mb-4">
           {(["en", "nl"] as Language[]).map((lang) => (
             <button
@@ -105,22 +107,22 @@ export default function ProjectWizard({ onClose }: { onClose: () => void }) {
             </button>
           ))}
           <span className="self-center text-[11px] text-stone-400">
-            Each language exports as its own PDF.
+            {t("langVersionHint")}
           </span>
         </div>
 
-        <label className="label">Theme</label>
+        <label className="label">{t("theme")}</label>
         <div className="grid grid-cols-2 gap-2 mb-6">
-          {THEMES.map((t) => (
+          {THEMES.map((th) => (
             <button
-              key={t.id}
+              key={th.id}
               className={`rounded-md border p-2.5 text-left cursor-pointer ${
-                theme === t.id ? "border-amber-700 bg-amber-50" : "border-stone-200 hover:border-stone-400"
+                theme === th.id ? "border-amber-700 bg-amber-50" : "border-stone-200 hover:border-stone-400"
               }`}
-              onClick={() => setTheme(t.id)}
+              onClick={() => setTheme(th.id)}
             >
               <div className="flex gap-1 mb-1.5">
-                {t.defaultPalette.slice(0, 5).map((c, i) => (
+                {th.defaultPalette.slice(0, 5).map((c, i) => (
                   <span
                     key={i}
                     className="h-3.5 w-3.5 rounded-full border border-black/10"
@@ -128,22 +130,22 @@ export default function ProjectWizard({ onClose }: { onClose: () => void }) {
                   />
                 ))}
               </div>
-              <div className="text-xs font-semibold text-stone-800">{t.name}</div>
-              <div className="text-[10px] text-stone-500 leading-snug">{t.description}</div>
+              <div className="text-xs font-semibold text-stone-800">{th.name}</div>
+              <div className="text-[10px] text-stone-500 leading-snug">{th.description}</div>
             </button>
           ))}
         </div>
 
         <div className="flex justify-end gap-2">
           <button className="btn-secondary" onClick={onClose}>
-            Cancel
+            {t("cancel")}
           </button>
           <button className="btn-primary" onClick={() => void create()}>
-            Create project
+            {t("createProject")}
           </button>
         </div>
         <p className="text-[11px] text-stone-400 mt-3">
-          Document format: A4 portrait. You can also import a Markdown file from the dashboard instead.
+          {t("wizardFootnote")}
         </p>
       </div>
     </div>

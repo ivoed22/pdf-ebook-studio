@@ -5,6 +5,11 @@ import * as db from "../core/storage/db";
 import { clearImageUrls, revokeImageUrl } from "../core/assets/imageStore";
 
 export type Screen = "dashboard" | "editor";
+export type SaveState = "saved" | "saving";
+
+const HISTORY_LIMIT = 50;
+/** Edits with the same label within this window collapse into one undo step. */
+const BURST_MS = 900;
 
 interface StudioState {
   projects: Project[];
@@ -14,13 +19,20 @@ interface StudioState {
   selectedPageId: string | null;
   activeLanguage: Language;
   loading: boolean;
+  saveState: SaveState;
+  past: Project[];
+  future: Project[];
 
   init(): Promise<void>;
   openProject(id: string): Promise<void>;
   closeProject(): void;
   createProject(project: Project): Promise<void>;
   removeProject(id: string): Promise<void>;
+  duplicateProject(id: string, copySuffix: string): Promise<void>;
   updateProject(mutator: (p: Project) => void): void;
+
+  undo(): void;
+  redo(): void;
 
   selectPage(id: string | null): void;
   setActiveLanguage(lang: Language): void;
@@ -28,6 +40,8 @@ interface StudioState {
   duplicatePage(id: string): void;
   removePage(id: string): void;
   movePage(id: string, direction: -1 | 1): void;
+  reorderPage(dragId: string, dropId: string): void;
+  renumberPages(language: Language): void;
   setPageField(pageId: string, field: string, value: FieldValue): void;
   removePageField(pageId: string, field: string): void;
   setPageTemplate(pageId: string, template: string): void;
@@ -41,19 +55,48 @@ interface StudioState {
 }
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
+let lastHistoryLabel = "";
+let lastHistoryTime = 0;
 
 export const useStudio = create<StudioState>((set, get) => {
+  /** Snapshot the current project into the undo stack (call BEFORE mutating). */
+  function checkpoint(label: string) {
+    const { project, past } = get();
+    if (!project) return;
+    const now = Date.now();
+    if (label === lastHistoryLabel && now - lastHistoryTime < BURST_MS && past.length > 0) {
+      lastHistoryTime = now;
+      set({ future: [] });
+      return;
+    }
+    lastHistoryLabel = label;
+    lastHistoryTime = now;
+    const nextPast = [...past, structuredClone(project)];
+    if (nextPast.length > HISTORY_LIMIT) nextPast.shift();
+    set({ past: nextPast, future: [] });
+  }
+
   function persist() {
     const { project } = get();
     if (!project) return;
     project.updatedAt = new Date().toISOString();
     if (saveTimer) clearTimeout(saveTimer);
     const snapshot = structuredClone(project);
-    saveTimer = setTimeout(() => void db.saveProject(snapshot), 300);
+    set({ saveState: "saving" });
+    saveTimer = setTimeout(() => {
+      void db.saveProject(snapshot).then(() => {
+        if (get().project?.id === snapshot.id) set({ saveState: "saved" });
+      });
+    }, 300);
     set({
       project: { ...project },
       projects: get().projects.map((p) => (p.id === project.id ? { ...project } : p)),
     });
+  }
+
+  function restore(project: Project) {
+    set({ project });
+    persist();
   }
 
   return {
@@ -64,6 +107,9 @@ export const useStudio = create<StudioState>((set, get) => {
     selectedPageId: null,
     activeLanguage: "en",
     loading: true,
+    saveState: "saved",
+    past: [],
+    future: [],
 
     async init() {
       const projects = await db.loadProjects();
@@ -77,18 +123,29 @@ export const useStudio = create<StudioState>((set, get) => {
       clearImageUrls();
       const assets = await db.loadImages(id);
       const images = new Map(assets.map((a) => [a.filename, a] as const));
+      lastHistoryLabel = "";
       set({
         project: structuredClone(project),
         images,
         screen: "editor",
         selectedPageId: project.pages[0]?.id ?? null,
         activeLanguage: project.languageVersions[0] ?? "en",
+        past: [],
+        future: [],
+        saveState: "saved",
       });
     },
 
     closeProject() {
       clearImageUrls();
-      set({ project: null, images: new Map(), screen: "dashboard", selectedPageId: null });
+      set({
+        project: null,
+        images: new Map(),
+        screen: "dashboard",
+        selectedPageId: null,
+        past: [],
+        future: [],
+      });
     },
 
     async createProject(project) {
@@ -99,15 +156,55 @@ export const useStudio = create<StudioState>((set, get) => {
 
     async removeProject(id) {
       await db.deleteProject(id);
+      await db.deleteThumb(id).catch(() => {});
       set({ projects: get().projects.filter((p) => p.id !== id) });
       if (get().project?.id === id) get().closeProject();
+    },
+
+    async duplicateProject(id, copySuffix) {
+      const source = get().projects.find((p) => p.id === id);
+      if (!source) return;
+      const clone = structuredClone(source);
+      clone.id = newId();
+      clone.projectMeta.title = `${clone.projectMeta.title} (${copySuffix})`;
+      clone.createdAt = clone.updatedAt = new Date().toISOString();
+      for (const page of clone.pages) page.id = newId();
+      await db.saveProject(clone);
+      const assets = await db.loadImages(id);
+      for (const asset of assets) await db.saveImage(clone.id, asset);
+      set({ projects: [clone, ...get().projects] });
     },
 
     updateProject(mutator) {
       const { project } = get();
       if (!project) return;
+      checkpoint("project-settings");
       mutator(project);
       persist();
+    },
+
+    undo() {
+      const { past, future, project } = get();
+      if (!past.length || !project) return;
+      const previous = past[past.length - 1];
+      lastHistoryLabel = "";
+      set({
+        past: past.slice(0, -1),
+        future: [...future, structuredClone(project)].slice(-HISTORY_LIMIT),
+      });
+      restore(previous);
+    },
+
+    redo() {
+      const { past, future, project } = get();
+      if (!future.length || !project) return;
+      const next = future[future.length - 1];
+      lastHistoryLabel = "";
+      set({
+        future: future.slice(0, -1),
+        past: [...past, structuredClone(project)].slice(-HISTORY_LIMIT),
+      });
+      restore(next);
     },
 
     selectPage(id) {
@@ -128,6 +225,7 @@ export const useStudio = create<StudioState>((set, get) => {
     addPage(page) {
       const { project } = get();
       if (!project) return;
+      checkpoint(`add-page-${Date.now()}`);
       const withId: Page = { ...page, id: newId() };
       project.pages.push(withId);
       project.pages.sort((a, b) => a.pageNumber - b.pageNumber);
@@ -140,10 +238,13 @@ export const useStudio = create<StudioState>((set, get) => {
       if (!project) return;
       const src = project.pages.find((p) => p.id === id);
       if (!src) return;
+      checkpoint(`dup-page-${Date.now()}`);
       const copy: Page = structuredClone(src);
       copy.id = newId();
-      copy.pageNumber = Math.max(...project.pages.map((p) => p.pageNumber)) + 1;
+      copy.pageNumber =
+        Math.max(...project.pages.filter((p) => p.language === src.language).map((p) => p.pageNumber)) + 1;
       project.pages.push(copy);
+      project.pages.sort((a, b) => a.pageNumber - b.pageNumber);
       persist();
       set({ selectedPageId: copy.id });
     },
@@ -151,6 +252,7 @@ export const useStudio = create<StudioState>((set, get) => {
     removePage(id) {
       const { project, selectedPageId } = get();
       if (!project) return;
+      checkpoint(`remove-page-${id}`);
       project.pages = project.pages.filter((p) => p.id !== id);
       persist();
       if (selectedPageId === id) set({ selectedPageId: project.pages[0]?.id ?? null });
@@ -159,12 +261,48 @@ export const useStudio = create<StudioState>((set, get) => {
     movePage(id, direction) {
       const { project } = get();
       if (!project) return;
-      const sorted = [...project.pages].sort((a, b) => a.pageNumber - b.pageNumber);
+      const page = project.pages.find((p) => p.id === id);
+      if (!page) return;
+      const sorted = project.pages
+        .filter((p) => p.language === page.language)
+        .sort((a, b) => a.pageNumber - b.pageNumber);
       const idx = sorted.findIndex((p) => p.id === id);
       const other = sorted[idx + direction];
       if (idx < 0 || !other) return;
-      const page = sorted[idx];
+      checkpoint(`move-page-${id}`);
       [page.pageNumber, other.pageNumber] = [other.pageNumber, page.pageNumber];
+      project.pages.sort((a, b) => a.pageNumber - b.pageNumber);
+      persist();
+    },
+
+    reorderPage(dragId, dropId) {
+      const { project } = get();
+      if (!project || dragId === dropId) return;
+      const drag = project.pages.find((p) => p.id === dragId);
+      const drop = project.pages.find((p) => p.id === dropId);
+      if (!drag || !drop || drag.language !== drop.language) return;
+      checkpoint(`reorder-${dragId}-${dropId}`);
+      const lang = drag.language;
+      const sorted = project.pages
+        .filter((p) => p.language === lang)
+        .sort((a, b) => a.pageNumber - b.pageNumber);
+      const numbers = sorted.map((p) => p.pageNumber);
+      const fromIdx = sorted.findIndex((p) => p.id === dragId);
+      const toIdx = sorted.findIndex((p) => p.id === dropId);
+      sorted.splice(toIdx, 0, sorted.splice(fromIdx, 1)[0]);
+      sorted.forEach((p, i) => (p.pageNumber = numbers[i]));
+      project.pages.sort((a, b) => a.pageNumber - b.pageNumber);
+      persist();
+    },
+
+    renumberPages(language) {
+      const { project } = get();
+      if (!project) return;
+      checkpoint("renumber");
+      const sorted = project.pages
+        .filter((p) => p.language === language)
+        .sort((a, b) => a.pageNumber - b.pageNumber);
+      sorted.forEach((p, i) => (p.pageNumber = i + 1));
       project.pages.sort((a, b) => a.pageNumber - b.pageNumber);
       persist();
     },
@@ -173,6 +311,7 @@ export const useStudio = create<StudioState>((set, get) => {
       const { project } = get();
       const page = project?.pages.find((p) => p.id === pageId);
       if (!page) return;
+      checkpoint(`field-${pageId}-${field}`);
       page.fields = { ...page.fields, [field]: value };
       persist();
     },
@@ -181,6 +320,7 @@ export const useStudio = create<StudioState>((set, get) => {
       const { project } = get();
       const page = project?.pages.find((p) => p.id === pageId);
       if (!page) return;
+      checkpoint(`remove-field-${pageId}-${field}`);
       const { [field]: _removed, ...rest } = page.fields;
       page.fields = rest;
       persist();
@@ -190,6 +330,7 @@ export const useStudio = create<StudioState>((set, get) => {
       const { project } = get();
       const page = project?.pages.find((p) => p.id === pageId);
       if (!page) return;
+      checkpoint(`template-${pageId}`);
       page.template = template;
       persist();
     },
@@ -198,6 +339,7 @@ export const useStudio = create<StudioState>((set, get) => {
       const { project } = get();
       const page = project?.pages.find((p) => p.id === pageId);
       if (!page || !Number.isFinite(n) || n < 1) return;
+      checkpoint(`pagenum-${pageId}`);
       page.pageNumber = Math.floor(n);
       project!.pages.sort((a, b) => a.pageNumber - b.pageNumber);
       persist();
@@ -207,6 +349,7 @@ export const useStudio = create<StudioState>((set, get) => {
       const { project } = get();
       const page = project?.pages.find((p) => p.id === pageId);
       if (!page) return;
+      checkpoint(`pagelang-${pageId}`);
       page.language = lang;
       if (!project!.languageVersions.includes(lang)) project!.languageVersions.push(lang);
       persist();
@@ -237,6 +380,7 @@ export const useStudio = create<StudioState>((set, get) => {
     setPalettes(palettes) {
       const { project } = get();
       if (!project) return;
+      checkpoint("palettes");
       project.palettes = palettes;
       persist();
     },

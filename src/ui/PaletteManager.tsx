@@ -3,11 +3,14 @@ import { useStudio } from "../store/useStudio";
 import { PALETTE_PRESETS } from "../data/themes/themes";
 import { newId, type Palette } from "../types/project";
 import { isValidHex } from "../pdf/components";
+import { useT } from "../i18n/strings";
+import { toast } from "./kit/Toaster";
 
 export default function PaletteManager() {
   const project = useStudio((s) => s.project);
   const setPalettes = useStudio((s) => s.setPalettes);
   const fileInput = useRef<HTMLInputElement>(null);
+  const t = useT();
 
   if (!project) return null;
   const palettes = project.palettes;
@@ -33,14 +36,14 @@ export default function PaletteManager() {
       if (!cleaned.length) throw new Error("No palettes found in file.");
       save([...palettes, ...cleaned]);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Could not read palette file.");
+      toast.error(e instanceof Error ? e.message : t("paletteReadError"));
     }
   }
 
   return (
     <div className="p-4">
       <p className="text-[11px] text-stone-400 mb-3 leading-snug">
-        Saved palettes can be applied to any page from the page editor. Custom palette JSON:{" "}
+        {t("paletteIntro")}{" "}
         <code className="font-mono">{`{"name":"My palette","colors":[{"name":"Cream","hex":"#F2E8D8"}]}`}</code>
       </p>
       <div className="flex gap-2 mb-4 flex-wrap">
@@ -53,10 +56,10 @@ export default function PaletteManager() {
             ])
           }
         >
-          + New palette
+          {t("newPalette")}
         </button>
         <button className="btn-secondary text-xs" onClick={() => fileInput.current?.click()}>
-          Import JSON…
+          {t("importJsonShort")}
         </button>
         <select
           className="input text-xs w-auto cursor-pointer"
@@ -68,7 +71,7 @@ export default function PaletteManager() {
             }
           }}
         >
-          <option value="">Add preset…</option>
+          <option value="">{t("addPreset")}</option>
           {PALETTE_PRESETS.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
@@ -88,7 +91,7 @@ export default function PaletteManager() {
         />
       </div>
 
-      {palettes.length === 0 && <p className="text-xs text-stone-400">No saved palettes yet.</p>}
+      {palettes.length === 0 && <p className="text-xs text-stone-400">{t("noPalettes")}</p>}
 
       {palettes.map((palette, pi) => (
         <div key={palette.id} className="rounded-md border border-stone-200 p-3 mb-3">
@@ -104,7 +107,7 @@ export default function PaletteManager() {
               className="text-xs text-stone-400 hover:text-red-600 shrink-0 cursor-pointer"
               onClick={() => save(palettes.filter((_, j) => j !== pi))}
             >
-              Delete
+              {t("delete")}
             </button>
           </div>
           {palette.colors.map((color, ci) => (
@@ -180,10 +183,10 @@ export default function PaletteManager() {
               )
             }
           >
-            + Add color
+            {t("addColor")}
           </button>
           {palette.colors.length < 3 && (
-            <p className="text-[11px] text-amber-600 mt-1">Tip: 3–6 colors render best on palette strips.</p>
+            <p className="text-[11px] text-amber-600 mt-1">{t("paletteTip")}</p>
           )}
         </div>
       ))}

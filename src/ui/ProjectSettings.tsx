@@ -1,23 +1,25 @@
 import { useStudio } from "../store/useStudio";
 import { THEMES } from "../data/themes/themes";
 import { PRODUCT_TYPES, type ProductType } from "../types/project";
+import { useT } from "../i18n/strings";
 
 export default function ProjectSettings() {
   const project = useStudio((s) => s.project);
   const updateProject = useStudio((s) => s.updateProject);
+  const t = useT();
 
   if (!project) return null;
   const meta = project.projectMeta;
 
   return (
     <div className="p-4">
-      <label className="label">Title</label>
+      <label className="label">{t("title")}</label>
       <input
         className="input mb-3"
         value={meta.title}
         onChange={(e) => updateProject((p) => (p.projectMeta.title = e.target.value))}
       />
-      <label className="label">Subtitle</label>
+      <label className="label">{t("subtitle")}</label>
       <input
         className="input mb-3"
         value={meta.subtitle ?? ""}
@@ -25,7 +27,7 @@ export default function ProjectSettings() {
       />
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="label">Author / brand</label>
+          <label className="label">{t("authorBrand")}</label>
           <input
             className="input mb-3"
             value={meta.author ?? ""}
@@ -33,7 +35,7 @@ export default function ProjectSettings() {
           />
         </div>
         <div>
-          <label className="label">Year</label>
+          <label className="label">{t("year")}</label>
           <input
             className="input mb-3"
             value={meta.year ?? ""}
@@ -42,32 +44,32 @@ export default function ProjectSettings() {
         </div>
       </div>
 
-      <label className="label">Product type</label>
+      <label className="label">{t("productType")}</label>
       <select
         className="input mb-3 cursor-pointer"
         value={meta.productType}
         onChange={(e) => updateProject((p) => (p.projectMeta.productType = e.target.value as ProductType))}
       >
-        {PRODUCT_TYPES.map((t) => (
-          <option key={t} value={t}>
-            {t}
+        {PRODUCT_TYPES.map((pt) => (
+          <option key={pt} value={pt}>
+            {pt}
           </option>
         ))}
       </select>
 
-      <label className="label">Theme</label>
+      <label className="label">{t("theme")}</label>
       <div className="grid grid-cols-1 gap-2 mb-3">
-        {THEMES.map((t) => (
+        {THEMES.map((th) => (
           <button
-            key={t.id}
+            key={th.id}
             className={`rounded-md border p-2.5 text-left cursor-pointer ${
-              meta.theme === t.id ? "border-amber-700 bg-amber-50" : "border-stone-200 hover:border-stone-400"
+              meta.theme === th.id ? "border-amber-700 bg-amber-50" : "border-stone-200 hover:border-stone-400"
             }`}
-            onClick={() => updateProject((p) => (p.projectMeta.theme = t.id))}
+            onClick={() => updateProject((p) => (p.projectMeta.theme = th.id))}
           >
             <div className="flex items-center gap-2">
               <div className="flex gap-1">
-                {t.defaultPalette.slice(0, 5).map((c, i) => (
+                {th.defaultPalette.slice(0, 5).map((c, i) => (
                   <span
                     key={i}
                     className="h-3.5 w-3.5 rounded-full border border-black/10"
@@ -75,14 +77,14 @@ export default function ProjectSettings() {
                   />
                 ))}
               </div>
-              <span className="text-xs font-semibold text-stone-800">{t.name}</span>
+              <span className="text-xs font-semibold text-stone-800">{th.name}</span>
             </div>
-            <div className="text-[10px] text-stone-500 mt-1">{t.description}</div>
+            <div className="text-[10px] text-stone-500 mt-1">{th.description}</div>
           </button>
         ))}
       </div>
 
-      <label className="label">Output profile</label>
+      <label className="label">{t("outputProfile")}</label>
       <select
         className="input mb-3 cursor-pointer"
         value={meta.outputProfile}
@@ -95,7 +97,7 @@ export default function ProjectSettings() {
       </select>
 
       <p className="text-[11px] text-stone-400">
-        Format: A4 portrait · Theme changes apply instantly to the live preview and all exports.
+        {t("settingsFootnote")}
       </p>
     </div>
   );

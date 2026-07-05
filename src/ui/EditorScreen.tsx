@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStudio } from "../store/useStudio";
 import { validateProject, errorCount } from "../core/validation/engine";
+import { useT } from "../i18n/strings";
 import PageList from "./PageList";
 import PageEditor from "./PageEditor";
 import PreviewPane from "./PreviewPane";
@@ -9,8 +10,18 @@ import PaletteManager from "./PaletteManager";
 import QCPanel from "./QCPanel";
 import ExportPanel from "./ExportPanel";
 import ProjectSettings from "./ProjectSettings";
+import ShortcutsOverlay from "./ShortcutsOverlay";
+import { Icon } from "./kit/Icon";
+import { LangToggle } from "./kit/LangToggle";
 
 type Tab = "page" | "assets" | "palettes" | "qc" | "export" | "settings";
+
+function isTypingTarget(el: EventTarget | null): boolean {
+  return (
+    el instanceof HTMLElement &&
+    (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable)
+  );
+}
 
 export default function EditorScreen() {
   const project = useStudio((s) => s.project);
@@ -18,7 +29,14 @@ export default function EditorScreen() {
   const closeProject = useStudio((s) => s.closeProject);
   const activeLanguage = useStudio((s) => s.activeLanguage);
   const setActiveLanguage = useStudio((s) => s.setActiveLanguage);
+  const saveState = useStudio((s) => s.saveState);
+  const canUndo = useStudio((s) => s.past.length > 0);
+  const canRedo = useStudio((s) => s.future.length > 0);
+  const undo = useStudio((s) => s.undo);
+  const redo = useStudio((s) => s.redo);
+  const t = useT();
   const [tab, setTab] = useState<Tab>("page");
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const issues = useMemo(
     () => (project ? validateProject(project, images) : []),
@@ -26,27 +44,86 @@ export default function EditorScreen() {
   );
   const errors = errorCount(issues);
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const s = useStudio.getState();
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        e.shiftKey ? s.redo() : s.undo();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        s.redo();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        if (s.selectedPageId) s.duplicatePage(s.selectedPageId);
+        return;
+      }
+      if (isTypingTarget(e.target)) return;
+      if (e.key === "PageUp" || e.key === "PageDown") {
+        e.preventDefault();
+        const pages = (s.project?.pages ?? [])
+          .filter((p) => p.language === s.activeLanguage)
+          .sort((a, b) => a.pageNumber - b.pageNumber);
+        const idx = pages.findIndex((p) => p.id === s.selectedPageId);
+        const next = pages[idx + (e.key === "PageDown" ? 1 : -1)];
+        if (next) s.selectPage(next.id);
+        return;
+      }
+      if (e.key === "?") setHelpOpen((h) => !h);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   if (!project) return null;
 
   const tabs: { id: Tab; label: string; badge?: number }[] = [
-    { id: "page", label: "Page" },
-    { id: "assets", label: "Images", badge: images.size || undefined },
-    { id: "palettes", label: "Palettes" },
-    { id: "qc", label: "QC", badge: issues.length || undefined },
-    { id: "export", label: "Export" },
-    { id: "settings", label: "Project" },
+    { id: "page", label: t("tabPage") },
+    { id: "assets", label: t("tabImages"), badge: images.size || undefined },
+    { id: "palettes", label: t("tabPalettes") },
+    { id: "qc", label: t("tabQc"), badge: issues.length || undefined },
+    { id: "export", label: t("tabExport") },
+    { id: "settings", label: t("tabProject") },
   ];
 
   return (
     <div className="h-full flex flex-col">
-      <header className="flex items-center gap-4 border-b border-stone-200 bg-white px-4 py-2.5 shrink-0">
+      <div className="lg:hidden p-3 text-center text-xs text-amber-800 bg-amber-50 border-b border-amber-200">
+        {t("narrowScreen")}
+      </div>
+      <header className="flex items-center gap-3 border-b border-stone-200 bg-white px-4 py-2 shrink-0">
         <button className="btn-ghost text-sm" onClick={closeProject}>
-          ← Projects
+          {t("backToProjects")}
         </button>
         <div className="min-w-0">
-          <h1 className="font-display font-semibold text-stone-900 truncate">
+          <h1 className="font-display font-semibold text-stone-900 truncate leading-tight">
             {project.projectMeta.title}
           </h1>
+          <span className={`text-[10px] ${saveState === "saved" ? "text-emerald-600" : "text-stone-400"}`}>
+            {saveState === "saved" ? t("saved") : t("saving")}
+          </span>
+        </div>
+        <div className="flex items-center gap-0.5 ml-2">
+          <button
+            className="btn-ghost px-1.5 py-1"
+            title={`${t("undo")} (Ctrl+Z)`}
+            disabled={!canUndo}
+            onClick={undo}
+          >
+            <Icon name="undo" size={14} />
+          </button>
+          <button
+            className="btn-ghost px-1.5 py-1"
+            title={`${t("redo")} (Ctrl+Y)`}
+            disabled={!canRedo}
+            onClick={redo}
+          >
+            <Icon name="redo" size={14} />
+          </button>
         </div>
         <div className="ml-auto flex items-center gap-3">
           {project.languageVersions.length > 1 && (
@@ -68,13 +145,14 @@ export default function EditorScreen() {
             className={`btn text-xs ${errors ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}
             onClick={() => setTab("qc")}
           >
-            {errors ? `${errors} error${errors > 1 ? "s" : ""}` : "QC clean"}
+            {errors ? t("errorsN", { n: errors }) : t("qcClean")}
           </button>
+          <LangToggle />
         </div>
       </header>
 
       <div className="flex flex-1 min-h-0">
-        <aside className="w-56 shrink-0 border-r border-stone-200 bg-white overflow-y-auto">
+        <aside className="w-60 shrink-0 border-r border-stone-200 bg-white overflow-y-auto">
           <PageList />
         </aside>
 
@@ -84,18 +162,18 @@ export default function EditorScreen() {
 
         <aside className="w-[26rem] shrink-0 border-l border-stone-200 bg-white flex flex-col">
           <nav className="flex border-b border-stone-200 shrink-0">
-            {tabs.map((t) => (
+            {tabs.map((tb) => (
               <button
-                key={t.id}
-                className={`flex-1 px-1 py-2.5 text-[11px] font-semibold uppercase tracking-wide cursor-pointer border-b-2 ${
-                  tab === t.id
+                key={tb.id}
+                className={`flex-1 px-1 py-2.5 text-[10px] font-semibold uppercase tracking-wide cursor-pointer border-b-2 ${
+                  tab === tb.id
                     ? "border-amber-700 text-stone-900"
                     : "border-transparent text-stone-400 hover:text-stone-600"
                 }`}
-                onClick={() => setTab(t.id)}
+                onClick={() => setTab(tb.id)}
               >
-                {t.label}
-                {t.badge ? <span className="ml-1 text-amber-700">{t.badge}</span> : null}
+                {tb.label}
+                {tb.badge ? <span className="ml-1 text-amber-700">{tb.badge}</span> : null}
               </button>
             ))}
           </nav>
@@ -109,6 +187,7 @@ export default function EditorScreen() {
           </div>
         </aside>
       </div>
+      {helpOpen && <ShortcutsOverlay onClose={() => setHelpOpen(false)} />}
     </div>
   );
 }

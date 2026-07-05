@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useStudio } from "../store/useStudio";
 import { assetsFromFiles, imageUrl } from "../core/assets/imageStore";
 import { imageFilenamesForPage } from "../types/project";
+import { useT } from "../i18n/strings";
 
 export default function AssetManager() {
   const project = useStudio((s) => s.project);
@@ -11,6 +12,7 @@ export default function AssetManager() {
   const fileInput = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [notice, setNotice] = useState("");
+  const t = useT();
 
   const usedFilenames = useMemo(() => {
     const used = new Set<string>();
@@ -25,10 +27,10 @@ export default function AssetManager() {
     const outcome = await assetsFromFiles(files, images);
     await addImages(outcome.added);
     const notes: string[] = [];
-    if (outcome.added.length) notes.push(`${outcome.added.length} image(s) added.`);
-    if (outcome.duplicates.length) notes.push(`${outcome.duplicates.length} replaced (same filename).`);
+    if (outcome.added.length) notes.push(t("imagesAdded", { n: outcome.added.length }));
+    if (outcome.duplicates.length) notes.push(t("imagesReplaced", { n: outcome.duplicates.length }));
     if (outcome.skipped.length)
-      notes.push(`Skipped unsupported: ${outcome.skipped.slice(0, 4).join(", ")}${outcome.skipped.length > 4 ? "…" : ""}`);
+      notes.push(t("imagesSkipped", { names: outcome.skipped.slice(0, 4).join(", ") + (outcome.skipped.length > 4 ? "…" : "") }));
     setNotice(notes.join(" "));
   }
 
@@ -52,11 +54,11 @@ export default function AssetManager() {
           void handleFiles(e.dataTransfer.files);
         }}
       >
-        <p className="text-sm font-medium text-stone-600">Drop images or a ZIP here</p>
+        <p className="text-sm font-medium text-stone-600">{t("dropImages")}</p>
         <p className="text-[11px] text-stone-400 mt-1">
-          .jpg · .jpeg · .png · .webp · .zip — matched to pages by exact filename
+          {t("dropImagesHint")}
           <br />
-          Naming: page-01-cover.jpg, page-07-soft-beige-retreat.jpg
+          {t("namingExample")}
         </p>
         <input
           ref={fileInput}
@@ -75,9 +77,9 @@ export default function AssetManager() {
 
       <div className="mt-4">
         <div className="panel-title mb-2">
-          Uploaded ({images.size})
+          {t("uploadedN", { n: images.size })}
         </div>
-        {sorted.length === 0 && <p className="text-xs text-stone-400">No images uploaded yet.</p>}
+        {sorted.length === 0 && <p className="text-xs text-stone-400">{t("noImagesYet")}</p>}
         <ul className="grid grid-cols-2 gap-2">
           {sorted.map((asset) => {
             const used = usedFilenames.has(asset.filename);
@@ -101,13 +103,13 @@ export default function AssetManager() {
                         used ? "text-emerald-600" : "text-amber-600"
                       }`}
                     >
-                      {used ? "In use" : "Unused"}
+                      {used ? t("inUse") : t("unused")}
                     </span>
                     <button
                       className="text-[10px] text-stone-400 hover:text-red-600 opacity-0 group-hover:opacity-100"
                       onClick={() => void removeImage(asset.filename)}
                     >
-                      Remove
+                      {t("remove")}
                     </button>
                   </div>
                 </div>

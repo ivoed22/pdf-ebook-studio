@@ -11,6 +11,18 @@ A local-first web app that turns prepared Markdown content and images into premi
 - **Exterior inspiration magazines** — garden/facade concepts, planting and maintenance notes
 - **General ebooks / guides** — chapters, checklists, workbook pages, key takeaways
 
+## v2 highlights
+
+- Bilingual app UI (Dutch/English toggle) — ebook content languages remain separate
+- Undo/redo with keyboard shortcuts, autosave indicator
+- Dashboard with live cover thumbnails, search, sort, duplicate, paste-Markdown import
+- Page list with drag & drop reordering and mini page thumbnails
+- Visual template picker with layout schematics for all 66 templates
+- Per-image crop focus control (top/bottom/left/right/center)
+- QC auto-fix: one click repairs page numbering, image matches, HEX colors, unused images
+- All-pages grid preview with instant render cache
+- Etsy listing images: four 2000×2000 marketing visuals composed from your real pages
+
 ## Workflow
 
 1. Create a project (or import structured Markdown / project JSON, or load a sample).

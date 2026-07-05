@@ -6,6 +6,7 @@ import { pdfToImages, type RenderedPage } from "./pdfToImages";
 import { renderContactSheet } from "./contactSheet";
 import { issuesAsReport, missingAssetsReport, validateProject } from "../validation/engine";
 import { listingDescription, listingTags, listingTitle, readMeText } from "./listingTexts";
+import { renderEtsyVisuals } from "./etsyVisuals";
 
 export type ExportProgress = (step: string) => void;
 
@@ -90,6 +91,22 @@ export async function exportCustomerZip(
   saveAs(await zip.generateAsync({ type: "blob" }), `${slug}-customer-pack.zip`);
 }
 
+export async function exportEtsyVisuals(
+  project: Project,
+  images: Map<string, ImageAsset>,
+  languages: Language[],
+  onProgress: ExportProgress = () => {},
+): Promise<void> {
+  const slug = slugify(project.projectMeta.title);
+  const zip = new JSZip();
+  for (const language of languages) {
+    const visuals = await renderEtsyVisuals(project, images, language, onProgress);
+    for (const v of visuals) zip.file(v.name, v.blob);
+  }
+  onProgress("Zipping listing images…");
+  saveAs(await zip.generateAsync({ type: "blob" }), `${slug}-etsy-listing-images.zip`);
+}
+
 export async function exportSellerZip(
   project: Project,
   images: Map<string, ImageAsset>,
@@ -113,12 +130,9 @@ export async function exportSellerZip(
     listing.file("listing-description.txt", listingDescription(project, language));
     listing.file("listing-tags.txt", listingTags(project, language));
     listing.file(language === "nl" ? "Lees-mij.txt" : "Read-Me.txt", readMeText(project, language));
-    // Etsy listing images: first pages as square-ish crops are left to the seller;
-    // the first 5 page previews are the standard listing photo set.
     const photos = listing.folder("listing-photos")!;
-    for (const p of art.previews.slice(0, 5)) {
-      photos.file(`listing-photo-${p.pageNumber}.jpg`, p.blob);
-    }
+    const visuals = await renderEtsyVisuals(project, images, language, onProgress, art.previews);
+    for (const v of visuals) photos.file(v.name, v.blob);
   }
 
   onProgress("Writing QC reports…");

@@ -45,6 +45,30 @@ export function fieldPalette(page: Page): PaletteColor[] {
   return [];
 }
 
+export type ImageFocus = "center" | "top" | "bottom" | "left" | "right";
+
+/** Reads the crop focus stored alongside an image field (e.g. heroImageFocus). */
+export function fieldFocus(page: Page, imageField: string): ImageFocus {
+  const v = page.fields[`${imageField}Focus`];
+  if (v === "top" || v === "bottom" || v === "left" || v === "right") return v;
+  return "center";
+}
+
+export function focusPosition(focus: ImageFocus | undefined): string {
+  switch (focus) {
+    case "top":
+      return "50% 0%";
+    case "bottom":
+      return "50% 100%";
+    case "left":
+      return "0% 50%";
+    case "right":
+      return "100% 50%";
+    default:
+      return "50% 50%";
+  }
+}
+
 export function pageImageUrl(ctx: RenderContext, filename: string | undefined): string | undefined {
   if (!filename) return undefined;
   return ctx.imageUrls.get(filename.trim());
@@ -267,11 +291,13 @@ export function HeroImage({
   filename,
   height,
   radius = 4,
+  focus = "center",
 }: {
   ctx: RenderContext;
   filename: string | undefined;
   height: number;
   radius?: number;
+  focus?: ImageFocus;
 }) {
   const url = pageImageUrl(ctx, filename);
   const { tokens } = ctx;
@@ -296,7 +322,10 @@ export function HeroImage({
   }
   return (
     <View style={{ height, borderRadius: radius, overflow: "hidden" }}>
-      <Image src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      <Image
+        src={url}
+        style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: focusPosition(focus) }}
+      />
     </View>
   );
 }
