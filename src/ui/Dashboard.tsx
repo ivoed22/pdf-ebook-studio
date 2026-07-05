@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useStudio } from "../store/useStudio";
 import { importMarkdown } from "../core/markdown/importer";
 import { importProjectJson } from "../core/export/projectJson";
+import { importAgentPack } from "../core/import/agentPack";
 import { getCoverThumb } from "../core/thumbs";
 import ProjectWizard from "./ProjectWizard";
 import interiorSample from "../data/samples/interior-magazine-sample.md?raw";
@@ -34,6 +35,7 @@ export default function Dashboard() {
   const [sort, setSort] = useState<"recent" | "title">("recent");
   const mdInput = useRef<HTMLInputElement>(null);
   const jsonInput = useRef<HTMLInputElement>(null);
+  const agentPackInput = useRef<HTMLInputElement>(null);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -63,6 +65,18 @@ export default function Dashboard() {
       toast.success(`"${project.projectMeta.title}" ✓`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Import failed.");
+    }
+  }
+
+  async function onAgentPackFile(file: File) {
+    try {
+      const { project, images, warnings } = await importAgentPack(file);
+      for (const w of warnings) toast.info(w);
+      for (const asset of images) await db.saveImage(project.id, asset);
+      await createProject(project);
+      toast.success(`"${project.projectMeta.title}" ${t("agentPackImported")}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Agent pack import failed.");
     }
   }
 
@@ -100,6 +114,9 @@ export default function Dashboard() {
           </button>
           <button className="btn-secondary" onClick={() => jsonInput.current?.click()}>
             {t("importJson")}
+          </button>
+          <button className="btn-secondary" onClick={() => agentPackInput.current?.click()}>
+            {t("importAgentPack")}
           </button>
           {projects.length > 0 && (
             <>
@@ -140,6 +157,17 @@ export default function Dashboard() {
             onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) void onJsonFile(f);
+              e.target.value = "";
+            }}
+          />
+          <input
+            ref={agentPackInput}
+            type="file"
+            accept=".zip"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void onAgentPackFile(f);
               e.target.value = "";
             }}
           />

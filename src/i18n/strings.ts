@@ -27,6 +27,8 @@ const STRINGS = {
   importMarkdown: { nl: "Importeer Markdown…", en: "Import Markdown…" },
   pasteMarkdown: { nl: "Plak Markdown…", en: "Paste Markdown…" },
   importJson: { nl: "Importeer project-JSON…", en: "Import project JSON…" },
+  importAgentPack: { nl: "Importeer Agent ZIP…", en: "Import Agent ZIP…" },
+  agentPackImported: { nl: "geimporteerd via Agent ZIP ✓", en: "imported from Agent ZIP ✓" },
   loadInteriorSample: { nl: "Interieur-voorbeeld", en: "Interior sample" },
   loadRecipeSample: { nl: "Recepten-voorbeeld", en: "Recipe sample" },
   searchProjects: { nl: "Zoek projecten…", en: "Search projects…" },
