@@ -173,6 +173,18 @@ const STRINGS = {
   noPalettes: { nl: "Nog geen opgeslagen paletten.", en: "No saved palettes yet." },
   paletteTip: { nl: "Tip: 3–6 kleuren renderen het mooist.", en: "Tip: 3–6 colors render best." },
   paletteReadError: { nl: "Kon paletbestand niet lezen.", en: "Could not read palette file." },
+  colorName: { nl: "Naam", en: "Name" },
+  paletteLibraryNote: {
+    nl: "Opgeslagen paletten zijn een bibliotheek. Kleuren verschijnen op pagina's mét een paletvak (o.a. interieur-, exterieur- en receptpagina's) — niet op covers. De algemene paginakleuren stel je in bij het tabblad Project (thema).",
+    en: "Saved palettes are a library. Colors show on pages that have a palette area (e.g. interior, exterior and recipe pages) — not on covers. The overall page colors are set under the Project tab (theme).",
+  },
+  applyToPage: { nl: "Toepassen op huidige pagina", en: "Apply to current page" },
+  paletteApplied: { nl: "Palet toegepast op pagina {n}.", en: "Palette applied to page {n}." },
+  paletteNoArea: {
+    nl: "Toegepast, maar pagina {n} heeft geen paletvak in deze template — kies een template die een palet toont.",
+    en: "Applied, but page {n} has no palette area in this template — pick a template that shows a palette.",
+  },
+  paletteNoPage: { nl: "Selecteer eerst een pagina.", en: "Select a page first." },
 
   // QC
   qcAllPassed: { nl: "Alle controles geslaagd", en: "All checks passed" },

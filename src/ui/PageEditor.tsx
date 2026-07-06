@@ -6,6 +6,7 @@ import type { FieldValue, PaletteColor } from "../types/project";
 import { LANGUAGES } from "../types/project";
 import { useT } from "../i18n/strings";
 import TemplatePicker from "./TemplatePicker";
+import { ColorField } from "./kit/ColorField";
 import type { ImageFocus } from "../pdf/components";
 
 /** Fields edited as one-item-per-line lists. */
@@ -326,20 +327,18 @@ function PaletteFieldEditor({ pageId, value }: { pageId: string; value: FieldVal
       </label>
       {colors.map((color, i) => (
         <div key={i} className="flex gap-1.5 mb-1.5 items-center">
-          <input
-            type="color"
-            className="h-8 w-9 rounded border border-stone-300 cursor-pointer bg-white"
-            value={/^#[0-9a-fA-F]{6}$/.test(color.hex) ? color.hex : "#cccccc"}
-            onChange={(e) => update(colors.map((c, j) => (j === i ? { ...c, hex: e.target.value.toUpperCase() } : c)))}
+          <ColorField
+            hex={color.hex}
+            onChange={(hex) => update(colors.map((c, j) => (j === i ? { ...c, hex } : c)))}
           />
           <input
-            className="input"
-            placeholder="Name"
+            className="input flex-1 min-w-0"
+            placeholder={t("colorName")}
             value={color.name}
             onChange={(e) => update(colors.map((c, j) => (j === i ? { ...c, name: e.target.value } : c)))}
           />
           <input
-            className={`input w-24 shrink-0 font-mono text-xs ${
+            className={`input w-20 shrink-0 font-mono text-xs ${
               /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(color.hex) ? "" : "border-red-400"
             }`}
             placeholder="#HEX"
@@ -347,7 +346,7 @@ function PaletteFieldEditor({ pageId, value }: { pageId: string; value: FieldVal
             onChange={(e) => update(colors.map((c, j) => (j === i ? { ...c, hex: e.target.value } : c)))}
           />
           <button
-            className="text-stone-400 hover:text-red-600 text-xs px-1 cursor-pointer"
+            className="text-stone-400 hover:text-red-600 text-xs px-1 cursor-pointer shrink-0"
             onClick={() => update(colors.filter((_, j) => j !== i))}
           >
             ✕
