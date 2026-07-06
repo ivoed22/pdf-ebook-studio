@@ -174,6 +174,28 @@ const STRINGS = {
   paletteTip: { nl: "Tip: 3–6 kleuren renderen het mooist.", en: "Tip: 3–6 colors render best." },
   paletteReadError: { nl: "Kon paletbestand niet lezen.", en: "Could not read palette file." },
   colorName: { nl: "Naam", en: "Name" },
+  documentTheme: { nl: "Documentthema", en: "Document theme" },
+  documentThemeNote: {
+    nl: "Deze kleuren bepalen het héle document (achtergrond, tekst, koppen, accenten). Interieur-paletten per pagina stel je los in via het paletvak op de pagina.",
+    en: "These colors drive the whole document (background, text, headings, accents). Per-page interior palettes are set separately via the palette field on the page.",
+  },
+  roleBackground: { nl: "Achtergrond", en: "Background" },
+  roleSurface: { nl: "Vlakken", en: "Panels" },
+  roleText: { nl: "Tekst", en: "Text" },
+  roleHeading: { nl: "Koppen", en: "Headings" },
+  roleAccent: { nl: "Accent", en: "Accent" },
+  roleDivider: { nl: "Lijnen", en: "Lines" },
+  resetTheme: { nl: "Terug naar themastandaard", en: "Reset to theme default" },
+  themeCustomized: { nl: "Aangepast", en: "Customized" },
+  paletteLibraryHeading: { nl: "Palet-bibliotheek", en: "Palette library" },
+  paletteLibrarySub: {
+    nl: "Voor pagina's mét een paletvak (interieur, exterieur, recept) — niet het documentthema.",
+    en: "For pages that have a palette area (interior, exterior, recipe) — not the document theme.",
+  },
+  themeFineTuneHint: {
+    nl: "Fijn afstellen van de kleuren doe je in het tabblad Paletten.",
+    en: "Fine-tune the colors in the Palettes tab.",
+  },
   paletteLibraryNote: {
     nl: "Opgeslagen paletten zijn een bibliotheek. Kleuren verschijnen op pagina's mét een paletvak (o.a. interieur-, exterieur- en receptpagina's) — niet op covers. De algemene paginakleuren stel je in bij het tabblad Project (thema).",
     en: "Saved palettes are a library. Colors show on pages that have a palette area (e.g. interior, exterior and recipe pages) — not on covers. The overall page colors are set under the Project tab (theme).",

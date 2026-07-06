@@ -1,5 +1,5 @@
 import type { ImageAsset, Language, Project } from "../../types/project";
-import { getTheme } from "../../data/themes/themes";
+import { resolveProjectTheme } from "../../data/themes/themes";
 import type { Theme } from "../../types/theme";
 import { renderProjectPdf } from "./renderPdf";
 import { pdfToImages, type RenderedPage } from "./pdfToImages";
@@ -38,7 +38,7 @@ export async function renderEtsyVisuals(
     (await pdfToImages(await renderProjectPdf(project, images, language), { scale: 1.7 }));
   if (!previews.length) return [];
 
-  const theme = getTheme(project.projectMeta.theme);
+  const theme = resolveProjectTheme(project);
   const bitmaps = await Promise.all(previews.slice(0, 7).map((p) => createImageBitmap(p.blob)));
   const visuals: EtsyVisual[] = [];
 

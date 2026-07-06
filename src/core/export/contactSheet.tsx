@@ -1,6 +1,6 @@
 import { Document, Image, Page, Text, View, pdf } from "@react-pdf/renderer";
 import type { Language, Project } from "../../types/project";
-import { getTheme } from "../../data/themes/themes";
+import { resolveProjectTheme } from "../../data/themes/themes";
 import { registerFonts } from "../../pdf/fonts";
 import type { RenderedPage } from "./pdfToImages";
 
@@ -14,7 +14,7 @@ export async function renderContactSheet(
   previews: RenderedPage[],
 ): Promise<Blob> {
   registerFonts();
-  const theme = getTheme(project.projectMeta.theme);
+  const theme = resolveProjectTheme(project);
   const c = theme.colors;
   const urls = previews.map((p) => ({ ...p, url: URL.createObjectURL(p.blob) }));
   const perSheet = COLS * ROWS;

@@ -53,6 +53,8 @@ export const ProjectMetaSchema = z.object({
   productType: z.enum(PRODUCT_TYPES),
   documentFormat: z.literal("A4-portrait"),
   theme: z.string(),
+  /** Per-role overrides on top of the chosen base theme (hex per ThemeColors key). */
+  themeColors: z.record(z.string(), z.string()).optional(),
   outputProfile: z.enum(OUTPUT_PROFILES).default("etsy-digital-product"),
   author: z.string().optional(),
   year: z.string().optional(),

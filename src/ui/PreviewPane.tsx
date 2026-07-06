@@ -59,7 +59,9 @@ export default function PreviewPane() {
     if (!project || !selectedPageId) return "";
     const page = project.pages.find((p) => p.id === selectedPageId);
     if (!page) return "";
-    return `${selectedPageId}:${project.projectMeta.theme}:${hash(JSON.stringify(page))}:${images.size}`;
+    return `${selectedPageId}:${project.projectMeta.theme}:${hash(
+      JSON.stringify(project.projectMeta.themeColors ?? {}),
+    )}:${hash(JSON.stringify(page))}:${images.size}`;
   }, [project, selectedPageId, images]);
 
   useEffect(() => {

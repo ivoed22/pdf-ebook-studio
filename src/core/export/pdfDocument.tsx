@@ -1,6 +1,6 @@
 import { Document } from "@react-pdf/renderer";
 import type { ImageAsset, Language, Project } from "../../types/project";
-import { getTheme } from "../../data/themes/themes";
+import { resolveProjectTheme } from "../../data/themes/themes";
 import { tokensFor } from "../../pdf/theme";
 import { registerFonts } from "../../pdf/fonts";
 import { renderPage } from "../../pdf/renderers";
@@ -19,7 +19,7 @@ export function buildRenderContext(
   const imageUrls = new Map<string, string>();
   for (const asset of images.values()) imageUrls.set(asset.filename, imageUrl(asset));
   const ctx: RenderContext = {
-    tokens: tokensFor(getTheme(project.projectMeta.theme)),
+    tokens: tokensFor(resolveProjectTheme(project)),
     project,
     imageUrls,
     pageCount: pages.length,

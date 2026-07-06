@@ -1,4 +1,5 @@
-import type { Theme } from "../../types/theme";
+import type { Theme, ThemeColors } from "../../types/theme";
+import type { Project } from "../../types/project";
 
 export const THEMES: Theme[] = [
   {
@@ -149,6 +150,60 @@ export const THEMES: Theme[] = [
 
 export function getTheme(id: string): Theme {
   return THEMES.find((t) => t.id === id) ?? THEMES[0];
+}
+
+/** The core theme roles the user can edit directly; the rest are derived. */
+export const EDITABLE_THEME_ROLES = [
+  "background",
+  "surface",
+  "text",
+  "heading",
+  "accent",
+  "divider",
+] as const;
+export type EditableThemeRole = (typeof EDITABLE_THEME_ROLES)[number];
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  return [parseInt(full.slice(0, 2), 16), parseInt(full.slice(2, 4), 16), parseInt(full.slice(4, 6), 16)];
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  const to = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
+  return `#${to(r)}${to(g)}${to(b)}`.toUpperCase();
+}
+
+/** Linear blend between two hex colors (t=0 → a, t=1 → b). */
+export function mixHex(a: string, b: string, t: number): string {
+  const [ar, ag, ab] = hexToRgb(a);
+  const [br, bg, bb] = hexToRgb(b);
+  return rgbToHex(ar + (br - ar) * t, ag + (bg - ag) * t, ab + (bb - ab) * t);
+}
+
+const isHex = (v: string | undefined): v is string => !!v && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v);
+
+/**
+ * The effective theme for a project: the chosen base theme with the user's
+ * per-role color overrides applied, and the subtle roles (muted text, soft
+ * accent, footer) re-derived so they always harmonize with the new colors.
+ */
+export function resolveProjectTheme(project: Project): Theme {
+  const base = getTheme(project.projectMeta.theme);
+  const overrides = project.projectMeta.themeColors;
+  if (!overrides || Object.keys(overrides).length === 0) return base;
+
+  const core: ThemeColors = { ...base.colors };
+  for (const role of EDITABLE_THEME_ROLES) {
+    if (isHex(overrides[role])) core[role] = overrides[role];
+  }
+  const colors: ThemeColors = {
+    ...core,
+    textMuted: isHex(overrides.textMuted) ? overrides.textMuted : mixHex(core.text, core.background, 0.45),
+    accentSoft: isHex(overrides.accentSoft) ? overrides.accentSoft : mixHex(core.accent, core.background, 0.72),
+    footerText: isHex(overrides.footerText) ? overrides.footerText : mixHex(core.text, core.background, 0.55),
+  };
+  return { ...base, colors };
 }
 
 /** Standalone palette presets available in the palette manager. */

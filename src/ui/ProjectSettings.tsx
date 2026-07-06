@@ -65,7 +65,12 @@ export default function ProjectSettings() {
             className={`rounded-md border p-2.5 text-left cursor-pointer ${
               meta.theme === th.id ? "border-amber-700 bg-amber-50" : "border-stone-200 hover:border-stone-400"
             }`}
-            onClick={() => updateProject((p) => (p.projectMeta.theme = th.id))}
+            onClick={() =>
+              updateProject((p) => {
+                p.projectMeta.theme = th.id;
+                delete p.projectMeta.themeColors;
+              })
+            }
           >
             <div className="flex items-center gap-2">
               <div className="flex gap-1">
@@ -83,6 +88,7 @@ export default function ProjectSettings() {
           </button>
         ))}
       </div>
+      <p className="text-[11px] text-stone-400 mb-3">{t("themeFineTuneHint")}</p>
 
       <label className="label">{t("outputProfile")}</label>
       <select

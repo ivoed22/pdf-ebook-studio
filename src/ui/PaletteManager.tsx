@@ -7,6 +7,7 @@ import { isValidHex } from "../pdf/components";
 import { useT } from "../i18n/strings";
 import { toast } from "./kit/Toaster";
 import { ColorField } from "./kit/ColorField";
+import ThemeColorsEditor from "./ThemeColorsEditor";
 
 export default function PaletteManager() {
   const project = useStudio((s) => s.project);
@@ -63,9 +64,12 @@ export default function PaletteManager() {
 
   return (
     <div className="p-4">
-      <div className="rounded-md bg-stone-50 border border-stone-100 p-2.5 mb-3">
-        <p className="text-[11px] text-stone-500 leading-snug">{t("paletteLibraryNote")}</p>
+      <ThemeColorsEditor />
+
+      <div className="flex items-baseline justify-between mb-1">
+        <span className="panel-title">{t("paletteLibraryHeading")}</span>
       </div>
+      <p className="text-[11px] text-stone-400 leading-snug mb-3">{t("paletteLibrarySub")}</p>
       <div className="flex gap-2 mb-4 flex-wrap">
         <button
           className="btn-secondary text-xs"

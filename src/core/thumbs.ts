@@ -64,7 +64,9 @@ const PAGE_THUMB_LIMIT = 120;
 export function pageThumbKey(project: Project, pageId: string): string {
   const page = project.pages.find((p) => p.id === pageId);
   if (!page) return pageId;
-  return `${pageId}:${project.projectMeta.theme}:${simpleHash(JSON.stringify(page))}`;
+  return `${pageId}:${project.projectMeta.theme}:${simpleHash(
+    JSON.stringify(project.projectMeta.themeColors ?? {}),
+  )}:${simpleHash(JSON.stringify(page))}`;
 }
 
 export function getPageThumbCached(key: string): string | undefined {
