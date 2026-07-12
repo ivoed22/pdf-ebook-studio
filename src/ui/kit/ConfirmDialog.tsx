@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { useT } from "../../i18n/strings";
+import { Dialog } from "./Dialog";
 
 interface ConfirmRequest {
   title: string;
@@ -44,17 +45,12 @@ export function ConfirmDialogHost() {
   const t = useT();
   if (!current) return null;
   return (
-    <div
-      className="fixed inset-0 z-[90] bg-black/40 flex items-center justify-center p-4"
-      onClick={() => settle(false)}
-    >
-      <div
-        className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="font-display text-lg font-semibold text-stone-900">{current.title}</h3>
-        <p className="text-sm text-stone-600 mt-2 leading-relaxed">{current.message}</p>
-        <div className="flex justify-end gap-2 mt-5">
+    <Dialog
+      title={current.title}
+      onClose={() => settle(false)}
+      maxWidth="max-w-sm"
+      footer={
+        <>
           <button className="btn-secondary" onClick={() => settle(false)} autoFocus>
             {t("cancel")}
           </button>
@@ -64,8 +60,10 @@ export function ConfirmDialogHost() {
           >
             {current.confirmLabel ?? t("confirm")}
           </button>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <p className="text-sm leading-relaxed text-[var(--muted)]">{current.message}</p>
+    </Dialog>
   );
 }

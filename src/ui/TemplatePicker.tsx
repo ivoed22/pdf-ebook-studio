@@ -3,7 +3,7 @@ import { allTemplates, rendererFor, templatesForProductType } from "../core/temp
 import type { RendererKind } from "../types/template";
 import type { ProductType } from "../types/project";
 import { useT } from "../i18n/strings";
-import { Icon } from "./kit/Icon";
+import { Dialog } from "./kit/Dialog";
 
 export default function TemplatePicker({
   productType,
@@ -28,15 +28,12 @@ export default function TemplatePicker({
   const visible = group ? templates.filter((tp) => tp.group === group) : templates;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="w-full max-w-3xl max-h-[88vh] rounded-xl bg-white shadow-xl flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-stone-200 shrink-0">
-          <h2 className="font-display text-lg font-semibold text-stone-900">{t("pickTemplateTitle")}</h2>
+    <Dialog title={t("pickTemplateTitle")} description={`${visible.length} templates beschikbaar`} onClose={onClose} maxWidth="max-w-4xl">
+        <div className="mb-4 flex items-center gap-3">
+          <label className="label mb-0" htmlFor="template-group">Groep</label>
           <select
-            className="input w-auto ml-auto cursor-pointer"
+            id="template-group"
+            className="input ml-auto w-auto cursor-pointer"
             value={group}
             onChange={(e) => setGroup(e.target.value)}
           >
@@ -47,19 +44,15 @@ export default function TemplatePicker({
               </option>
             ))}
           </select>
-          <button className="btn-ghost px-2" onClick={onClose}>
-            <Icon name="close" size={15} />
-          </button>
         </div>
-        <div className="overflow-y-auto p-5">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {visible.map((tp) => (
               <button
                 key={tp.id}
-                className={`rounded-lg border p-2.5 text-left transition-colors cursor-pointer ${
+                className={`min-h-44 rounded-2xl border p-3 text-left transition-colors cursor-pointer ${
                   tp.id === current
-                    ? "border-amber-700 bg-amber-50 ring-1 ring-amber-700/30"
-                    : "border-stone-200 hover:border-stone-400"
+                    ? "border-[var(--primary)] bg-[var(--primary-soft)] ring-1 ring-[var(--primary)]/30"
+                    : "border-[var(--border)] hover:border-[var(--primary)]"
                 }`}
                 onClick={() => {
                   onPick(tp.id);
@@ -67,23 +60,21 @@ export default function TemplatePicker({
                 }}
               >
                 <Schematic kind={rendererFor(tp.id)} />
-                <div className="mt-2 text-[11px] font-semibold text-stone-800 leading-tight">
+                <div className="mt-2 text-sm font-semibold text-[var(--ink)] leading-tight">
                   {tp.name}
                   {tp.id === current && (
-                    <span className="ml-1 text-[9px] font-bold text-amber-700 uppercase">
+                    <span className="ml-1 text-xs font-bold text-[var(--primary)] uppercase">
                       · {t("currentTemplate")}
                     </span>
                   )}
                 </div>
-                <div className="text-[9px] text-stone-400 leading-snug mt-0.5 line-clamp-2">
+                <div className="mt-1 line-clamp-2 text-xs leading-snug text-[var(--muted)]">
                   {tp.layoutIntent}
                 </div>
               </button>
             ))}
           </div>
-        </div>
-      </div>
-    </div>
+    </Dialog>
   );
 }
 

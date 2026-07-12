@@ -50,11 +50,12 @@ export function Toaster() {
   const toasts = useToasts((s) => s.toasts);
   const dismiss = useToasts((s) => s.dismiss);
   return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm">
+    <div className="fixed bottom-20 right-4 z-[100] flex max-w-[calc(100vw-2rem)] flex-col gap-2 lg:bottom-4" aria-live="polite" aria-atomic="false">
       {toasts.map((t) => (
         <button
           key={t.id}
-          className={`flex items-start gap-2.5 rounded-lg border px-3.5 py-2.5 text-sm shadow-lg text-left cursor-pointer animate-[toast-in_.2s_ease-out] ${KIND_STYLE[t.kind]}`}
+          className={`flex min-h-11 items-start gap-2.5 rounded-xl border px-3.5 py-2.5 text-sm shadow-lg text-left cursor-pointer animate-[toast-in_.2s_ease-out] ${KIND_STYLE[t.kind]}`}
+          aria-label={`${t.kind}: ${t.message}. Klik om te sluiten.`}
           onClick={() => dismiss(t.id)}
         >
           <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${KIND_DOT[t.kind]}`} />

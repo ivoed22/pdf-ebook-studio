@@ -106,7 +106,8 @@ export default function AssetManager() {
                       {used ? t("inUse") : t("unused")}
                     </span>
                     <button
-                      className="text-[10px] text-stone-400 hover:text-red-600 opacity-0 group-hover:opacity-100"
+                      className="inline-flex min-h-11 items-center rounded-lg px-2 text-xs font-semibold text-red-700 hover:bg-red-50"
+                      aria-label={`${asset.filename} verwijderen`}
                       onClick={() => void removeImage(asset.filename)}
                     >
                       {t("remove")}

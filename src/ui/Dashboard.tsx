@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStudio } from "../store/useStudio";
 import { importMarkdown } from "../core/markdown/importer";
-import { importProjectJson } from "../core/export/projectJson";
-import { importAgentPack } from "../core/import/agentPack";
-import { getCoverThumb } from "../core/thumbs";
 import ProjectWizard from "./ProjectWizard";
 import interiorSample from "../data/samples/interior-magazine-sample.md?raw";
 import recipeSample from "../data/samples/recipe-ebook-sample.md?raw";
@@ -12,6 +9,7 @@ import * as db from "../core/storage/db";
 import { useT, type StringKey } from "../i18n/strings";
 import { toast } from "./kit/Toaster";
 import { confirmDialog } from "./kit/ConfirmDialog";
+import { Dialog } from "./kit/Dialog";
 import { Icon } from "./kit/Icon";
 import { LangToggle } from "./kit/LangToggle";
 
@@ -31,6 +29,7 @@ export default function Dashboard() {
   const t = useT();
   const [wizardOpen, setWizardOpen] = useState(false);
   const [pasteOpen, setPasteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"recent" | "title">("recent");
   const mdInput = useRef<HTMLInputElement>(null);
@@ -39,362 +38,184 @@ export default function Dashboard() {
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const filtered = q
-      ? projects.filter((p) => p.projectMeta.title.toLowerCase().includes(q))
-      : projects;
-    return [...filtered].sort((a, b) =>
-      sort === "title"
-        ? a.projectMeta.title.localeCompare(b.projectMeta.title)
-        : b.updatedAt.localeCompare(a.updatedAt),
-    );
+    const filtered = q ? projects.filter((p) => p.projectMeta.title.toLowerCase().includes(q)) : projects;
+    return [...filtered].sort((a, b) => sort === "title"
+      ? a.projectMeta.title.localeCompare(b.projectMeta.title)
+      : b.updatedAt.localeCompare(a.updatedAt));
   }, [projects, search, sort]);
 
   async function importMarkdownText(text: string) {
     const { project, warnings } = importMarkdown(text);
-    for (const w of warnings) toast.info(w);
+    for (const warning of warnings) toast.info(warning);
     await createProject(project);
     toast.success(`"${project.projectMeta.title}" ✓`);
   }
 
   async function onJsonFile(file: File) {
     try {
+      const { importProjectJson } = await import("../core/export/projectJson");
       const { project, images, warnings } = importProjectJson(await file.text());
-      for (const w of warnings) toast.info(w);
+      for (const warning of warnings) toast.info(warning);
       for (const asset of images) await db.saveImage(project.id, asset);
       await createProject(project);
       toast.success(`"${project.projectMeta.title}" ✓`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Import failed.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Import failed.");
     }
   }
 
   async function onAgentPackFile(file: File) {
     try {
+      const { importAgentPack } = await import("../core/import/agentPack");
       const { project, images, warnings } = await importAgentPack(file);
-      for (const w of warnings) toast.info(w);
+      for (const warning of warnings) toast.info(warning);
       for (const asset of images) await db.saveImage(project.id, asset);
       await createProject(project);
       toast.success(`"${project.projectMeta.title}" ${t("agentPackImported")}`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Agent pack import failed.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Agent pack import failed.");
     }
   }
 
   return (
     <div className="min-h-full">
-      <header className="border-b border-stone-200 bg-white/90 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="h-9 w-9 rounded-lg bg-stone-900 text-amber-200 flex items-center justify-center shrink-0">
-              <Icon name="logo" size={18} />
+      <header className="sticky top-0 z-20 border-b border-white/70 bg-white/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface-strong)] text-[#f7c5da] shadow-lg">
+              <Icon name="logo" size={21} />
             </span>
             <div className="min-w-0">
-              <h1 className="font-display text-xl font-semibold text-stone-900 leading-tight">
-                PDF Ebook Studio
-              </h1>
-              <p className="text-xs text-stone-500 truncate">{t("appTagline")}</p>
+              <h1 className="truncate font-display text-lg font-semibold text-[var(--ink)] sm:text-2xl">PDF Ebook Studio</h1>
+              <p className="hidden truncate text-sm text-[var(--muted)] sm:block">{t("appTagline")}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="ml-auto flex items-center gap-2">
             <LangToggle />
-            <button className="btn-primary" onClick={() => setWizardOpen(true)}>
-              {t("newProject")}
-            </button>
+            <button className="btn-primary" onClick={() => setWizardOpen(true)}>{t("newProject")}</button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
-        <div className="flex flex-wrap items-center gap-2 mb-6">
-          <button className="btn-secondary" onClick={() => mdInput.current?.click()}>
-            {t("importMarkdown")}
-          </button>
-          <button className="btn-secondary" onClick={() => setPasteOpen(true)}>
-            {t("pasteMarkdown")}
-          </button>
-          <button className="btn-secondary" onClick={() => jsonInput.current?.click()}>
-            {t("importJson")}
-          </button>
-          <button className="btn-secondary" onClick={() => agentPackInput.current?.click()}>
-            {t("importAgentPack")}
-          </button>
+      <main id="main-content" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
+        <section className="mb-8 overflow-hidden rounded-[28px] bg-[var(--surface-strong)] px-5 py-7 text-white shadow-[var(--shadow-lg)] sm:px-8 sm:py-9">
+          <div className="grid gap-6 lg:grid-cols-[1.3fr_.7fr] lg:items-end">
+            <div>
+              <span className="mb-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-[#f7c5da]">CREATIVE WORKSPACE</span>
+              <h2 className="max-w-2xl font-display text-3xl font-semibold leading-tight sm:text-5xl">Van content naar een verkoopbaar ebook, in één studio.</h2>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/70 sm:text-base">Ontwerp, controleer en exporteer professionele PDF’s zonder dat je bestanden je browser verlaten.</p>
+            </div>
+            <div className="flex flex-wrap gap-2 lg:justify-end">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-semibold"><Icon name="lock" size={15} /> Local-first</span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-semibold"><Icon name="cloud" size={15} /> Automatisch opgeslagen</span>
+            </div>
+          </div>
+        </section>
+
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button className="btn-secondary" onClick={() => setImportOpen(true)}><Icon name="folder" size={17} /> Importeren</button>
           {projects.length > 0 && (
-            <>
-              <div className="ml-auto flex items-center gap-2">
-                <input
-                  className="input w-48"
-                  placeholder={t("searchProjects")}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <select
-                  className="input w-auto cursor-pointer"
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value as "recent" | "title")}
-                >
+            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:ml-auto sm:flex-row sm:justify-end">
+              <label className="min-w-0 sm:w-64">
+                <span className="sr-only">{t("searchProjects")}</span>
+                <input className="input" placeholder={t("searchProjects")} value={search} onChange={(event) => setSearch(event.target.value)} />
+              </label>
+              <label>
+                <span className="sr-only">Sorteren</span>
+                <select className="input sm:w-auto" value={sort} onChange={(event) => setSort(event.target.value as "recent" | "title")}>
                   <option value="recent">{t("sortRecent")}</option>
                   <option value="title">{t("sortTitle")}</option>
                 </select>
-              </div>
-            </>
+              </label>
+            </div>
           )}
-          <input
-            ref={mdInput}
-            type="file"
-            accept=".md,.markdown,.txt"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void f.text().then(importMarkdownText);
-              e.target.value = "";
-            }}
-          />
-          <input
-            ref={jsonInput}
-            type="file"
-            accept=".json"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void onJsonFile(f);
-              e.target.value = "";
-            }}
-          />
-          <input
-            ref={agentPackInput}
-            type="file"
-            accept=".zip"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void onAgentPackFile(f);
-              e.target.value = "";
-            }}
-          />
         </div>
 
         {projects.length === 0 ? (
-          <EmptyState
-            onSample={(which) =>
-              void importMarkdownText(which === "interior" ? interiorSample : recipeSample)
-            }
-            onNew={() => setWizardOpen(true)}
-          />
+          <EmptyState onSample={(which) => void importMarkdownText(which === "interior" ? interiorSample : recipeSample)} onNew={() => setWizardOpen(true)} />
         ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {visible.map((p) => (
-                <ProjectCard
-                  key={p.id}
-                  project={p}
-                  onOpen={() => void openProject(p.id)}
-                  onDuplicate={() => void duplicateProject(p.id, t("projectCopy"))}
-                  onDelete={async () => {
-                    const ok = await confirmDialog({
-                      title: t("deleteProjectQ"),
-                      message: t("deleteProjectBody", { name: p.projectMeta.title }),
-                      confirmLabel: t("delete"),
-                      danger: true,
-                    });
-                    if (ok) void removeProject(p.id);
-                  }}
-                />
-              ))}
-            </div>
-            <div className="mt-8 flex items-center gap-2 text-xs text-stone-400">
-              <Icon name="sparkle" size={13} />
-              <span>{t("tryASample")}</span>
-              <button
-                className="underline hover:text-stone-600 cursor-pointer"
-                onClick={() => void importMarkdownText(interiorSample)}
-              >
-                {t("loadInteriorSample")}
-              </button>
-              <span>·</span>
-              <button
-                className="underline hover:text-stone-600 cursor-pointer"
-                onClick={() => void importMarkdownText(recipeSample)}
-              >
-                {t("loadRecipeSample")}
-              </button>
-            </div>
-          </>
+          <section aria-label="Projecten" className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {visible.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onOpen={() => void openProject(project.id)}
+                onDuplicate={() => void duplicateProject(project.id, t("projectCopy"))}
+                onDelete={async () => {
+                  const ok = await confirmDialog({ title: t("deleteProjectQ"), message: t("deleteProjectBody", { name: project.projectMeta.title }), confirmLabel: t("delete"), danger: true });
+                  if (ok) void removeProject(project.id);
+                }}
+              />
+            ))}
+          </section>
         )}
       </main>
 
+      <input ref={mdInput} type="file" accept=".md,.markdown,.txt" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void file.text().then(importMarkdownText); event.target.value = ""; }} />
+      <input ref={jsonInput} type="file" accept=".json" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void onJsonFile(file); event.target.value = ""; }} />
+      <input ref={agentPackInput} type="file" accept=".zip" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void onAgentPackFile(file); event.target.value = ""; }} />
+
       {wizardOpen && <ProjectWizard onClose={() => setWizardOpen(false)} />}
-      {pasteOpen && (
-        <PasteMarkdownModal
-          onClose={() => setPasteOpen(false)}
-          onImport={(text) => {
-            setPasteOpen(false);
-            void importMarkdownText(text);
-          }}
-        />
+      {pasteOpen && <PasteMarkdownModal onClose={() => setPasteOpen(false)} onImport={(text) => { setPasteOpen(false); void importMarkdownText(text); }} />}
+      {importOpen && (
+        <Dialog title="Project importeren" description="Kies het formaat dat je al hebt." onClose={() => setImportOpen(false)} maxWidth="max-w-lg">
+          <div className="grid gap-3">
+            <ImportChoice icon="page" title={t("importMarkdown")} body="Open een voorbereid Markdown- of tekstbestand." onClick={() => { setImportOpen(false); mdInput.current?.click(); }} />
+            <ImportChoice icon="edit" title={t("pasteMarkdown")} body="Plak frontmatter en paginablokken rechtstreeks in de studio." onClick={() => { setImportOpen(false); setPasteOpen(true); }} />
+            <ImportChoice icon="folder" title={t("importJson")} body="Herstel een eerder geëxporteerde projectback-up." onClick={() => { setImportOpen(false); jsonInput.current?.click(); }} />
+            <ImportChoice icon="export" title={t("importAgentPack")} body="Importeer projectdata en afbeeldingen als één ZIP-pakket." onClick={() => { setImportOpen(false); agentPackInput.current?.click(); }} />
+          </div>
+        </Dialog>
       )}
     </div>
   );
 }
 
-function ProjectCard({
-  project,
-  onOpen,
-  onDuplicate,
-  onDelete,
-}: {
-  project: Project;
-  onOpen: () => void;
-  onDuplicate: () => void;
-  onDelete: () => void;
-}) {
+function ImportChoice({ icon, title, body, onClick }: { icon: string; title: string; body: string; onClick: () => void }) {
+  return <button className="flex min-h-20 items-center gap-4 rounded-2xl border border-[var(--border)] p-4 text-left transition-colors hover:border-[var(--primary)] hover:bg-[var(--primary-soft)]" onClick={onClick}><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]"><Icon name={icon} size={20} /></span><span><strong className="block text-sm text-[var(--ink)]">{title}</strong><span className="mt-0.5 block text-sm text-[var(--muted)]">{body}</span></span></button>;
+}
+
+function ProjectCard({ project, onOpen, onDuplicate, onDelete }: { project: Project; onOpen: () => void; onDuplicate: () => void; onDelete: () => void }) {
   const t = useT();
   const [thumb, setThumb] = useState<string | null>(null);
-
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     let alive = true;
-    getCoverThumb(project, (dataUrl) => {
-      if (alive) setThumb(dataUrl);
-    });
-    return () => {
-      alive = false;
-    };
+    void import("../core/thumbs").then(({ getCoverThumb }) => getCoverThumb(project, (dataUrl) => alive && setThumb(dataUrl)));
+    return () => { alive = false; };
   }, [project, project.updatedAt]);
-
   return (
-    <div
-      className="group rounded-xl border border-stone-200 bg-white overflow-hidden hover:border-stone-400 hover:shadow-md transition-all cursor-pointer"
-      onClick={onOpen}
-    >
-      <div className="aspect-[210/148] bg-stone-100 overflow-hidden relative">
-        {thumb ? (
-          <img src={thumb} alt="" className="w-full h-full object-cover object-top" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-stone-300">
-            <Icon name="page" size={28} strokeWidth={1.2} />
-          </div>
-        )}
-        <span className="absolute top-2 left-2 rounded bg-white/90 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700 shadow-sm">
-          {t(TYPE_LABEL_KEY[project.projectMeta.productType])}
-        </span>
-      </div>
-      <div className="p-3.5">
-        <h2 className="font-display text-base font-semibold text-stone-900 leading-snug truncate">
-          {project.projectMeta.title}
-        </h2>
-        <p className="text-[11px] text-stone-500 mt-1">
-          {project.pages.length} {t("pages")} ·{" "}
-          {project.languageVersions.map((l) => l.toUpperCase()).join(" + ")}
-        </p>
-        <div className="flex items-center justify-between mt-2.5">
-          <span className="text-[10px] text-stone-400">
-            {t("updated")} {new Date(project.updatedAt).toLocaleDateString()}
-          </span>
-          <span className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              className="p-1 rounded text-stone-400 hover:text-stone-700 hover:bg-stone-100"
-              title={t("duplicate")}
-              onClick={(e) => {
-                e.stopPropagation();
-                onDuplicate();
-              }}
-            >
-              <Icon name="copy" size={13} />
-            </button>
-            <button
-              className="p-1 rounded text-stone-400 hover:text-red-600 hover:bg-red-50"
-              title={t("delete")}
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-            >
-              <Icon name="trash" size={13} />
-            </button>
-          </span>
+    <article className="studio-card group overflow-hidden transition-transform hover:-translate-y-0.5">
+      <button className="block w-full text-left" onClick={onOpen} aria-label={`${project.projectMeta.title} openen`}>
+        <div className="relative aspect-[4/3] overflow-hidden bg-[var(--surface-soft)]">
+          {thumb ? <img src={thumb} alt={`Cover van ${project.projectMeta.title}`} className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]" /> : <span className="flex h-full items-center justify-center text-[var(--primary)]"><Icon name="page" size={38} strokeWidth={1.3} /></span>}
+          <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-[var(--primary-strong)] shadow-sm">{t(TYPE_LABEL_KEY[project.projectMeta.productType])}</span>
         </div>
+        <div className="px-4 pb-2 pt-4">
+          <h2 className="truncate font-display text-xl font-semibold text-[var(--ink)]">{project.projectMeta.title}</h2>
+          <p className="mt-1 text-sm text-[var(--muted)]">{project.pages.length} {t("pages")} · {project.languageVersions.map((language) => language.toUpperCase()).join(" + ")}</p>
+        </div>
+      </button>
+      <div className="relative flex min-h-14 items-center justify-between px-4 pb-3">
+        <span className="text-xs text-[var(--muted)]">{t("updated")} {new Date(project.updatedAt).toLocaleDateString()}</span>
+        <button className="icon-button" aria-label={`Acties voor ${project.projectMeta.title}`} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><Icon name="more" size={19} /></button>
+        {menuOpen && <div className="absolute bottom-12 right-3 z-10 min-w-40 rounded-xl border border-[var(--border)] bg-white p-1.5 shadow-xl"><button className="btn-ghost w-full justify-start" onClick={() => { setMenuOpen(false); onDuplicate(); }}><Icon name="copy" size={16} />{t("duplicate")}</button><button className="btn-ghost w-full justify-start text-red-700" onClick={() => { setMenuOpen(false); onDelete(); }}><Icon name="trash" size={16} />{t("delete")}</button></div>}
       </div>
-    </div>
+    </article>
   );
 }
 
-function EmptyState({
-  onSample,
-  onNew,
-}: {
-  onSample: (which: "interior" | "recipe") => void;
-  onNew: () => void;
-}) {
+function EmptyState({ onSample, onNew }: { onSample: (which: "interior" | "recipe") => void; onNew: () => void }) {
   const t = useT();
-  const steps: [StringKey, StringKey, string][] = [
-    ["onboard1Title", "onboard1Body", "page"],
-    ["onboard2Title", "onboard2Body", "check"],
-    ["onboard3Title", "onboard3Body", "sparkle"],
-  ];
-  return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-8">
-      <h2 className="font-display text-xl font-semibold text-stone-900 mb-6">{t("onboardTitle")}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
-        {steps.map(([titleKey, bodyKey, icon]) => (
-          <div key={titleKey} className="rounded-xl bg-stone-50 border border-stone-100 p-4">
-            <span className="h-8 w-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center mb-3">
-              <Icon name={icon} size={15} />
-            </span>
-            <div className="text-sm font-semibold text-stone-800">{t(titleKey)}</div>
-            <p className="text-xs text-stone-500 mt-1 leading-relaxed">{t(bodyKey)}</p>
-          </div>
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <button className="btn-primary" onClick={onNew}>
-          {t("newProject")}
-        </button>
-        <button className="btn-secondary" onClick={() => onSample("interior")}>
-          {t("loadInteriorSample")}
-        </button>
-        <button className="btn-secondary" onClick={() => onSample("recipe")}>
-          {t("loadRecipeSample")}
-        </button>
-      </div>
-    </div>
-  );
+  return <section className="studio-card p-5 sm:p-8"><div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"><div><span className="studio-chip">SNEL STARTEN</span><h2 className="mt-3 font-display text-2xl font-semibold sm:text-3xl">{t("onboardTitle")}</h2><p className="mt-2 max-w-xl text-sm text-[var(--muted)]">Begin leeg of ontdek de volledige workflow met een visueel voorbeeldproject.</p></div><button className="btn-primary" onClick={onNew}>{t("newProject")}</button></div><div className="grid gap-4 md:grid-cols-2"><SampleCard title={t("loadInteriorSample")} body="Een editorial interieurmagazine met palettes, materialen en beeldrijke pagina’s." accent="from-[#e8558d] to-[#8c56eb]" onClick={() => onSample("interior")} /><SampleCard title={t("loadRecipeSample")} body="Een compleet receptenebook met bereiding, voeding en verkoopklare export." accent="from-[#f59e66] to-[#e8558d]" onClick={() => onSample("recipe")} /></div></section>;
 }
 
-function PasteMarkdownModal({
-  onClose,
-  onImport,
-}: {
-  onClose: () => void;
-  onImport: (text: string) => void;
-}) {
+function SampleCard({ title, body, accent, onClick }: { title: string; body: string; accent: string; onClick: () => void }) {
+  return <button className="group overflow-hidden rounded-2xl border border-[var(--border)] bg-white text-left transition-all hover:border-[var(--primary)] hover:shadow-lg" onClick={onClick}><span className={`block h-24 bg-gradient-to-br ${accent} p-5`}><Icon name="sparkle" size={26} className="text-white" /></span><span className="block p-5"><strong className="font-display text-xl text-[var(--ink)]">{title}</strong><span className="mt-1 block text-sm leading-relaxed text-[var(--muted)]">{body}</span><span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--primary)]">Voorbeeld openen <Icon name="right" size={15} /></span></span></button>;
+}
+
+function PasteMarkdownModal({ onClose, onImport }: { onClose: () => void; onImport: (text: string) => void }) {
   const t = useT();
   const [text, setText] = useState("");
-  return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="font-display text-lg font-semibold text-stone-900 mb-1">
-          {t("pasteMarkdownTitle")}
-        </h2>
-        <p className="text-xs text-stone-500 mb-3">{t("pasteMarkdownHint")}</p>
-        <textarea
-          className="input font-mono text-xs"
-          rows={16}
-          autoFocus
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={"---\nprojectTitle: …\nproductType: interior-magazine\n---\n\n<!-- PAGE -->\npageNumber: 1\ntemplate: magazine-cover-editorial\n…"}
-        />
-        <div className="flex justify-end gap-2 mt-4">
-          <button className="btn-secondary" onClick={onClose}>
-            {t("cancel")}
-          </button>
-          <button className="btn-primary" disabled={!text.trim()} onClick={() => onImport(text)}>
-            {t("importBtn")}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  return <Dialog title={t("pasteMarkdownTitle")} description={t("pasteMarkdownHint")} onClose={onClose} footer={<><button className="btn-secondary" onClick={onClose}>{t("cancel")}</button><button className="btn-primary" disabled={!text.trim()} onClick={() => onImport(text)}>{t("importBtn")}</button></>}><label className="label" htmlFor="markdown-content">Markdown</label><textarea id="markdown-content" className="input min-h-80 font-mono text-sm" value={text} onChange={(event) => setText(event.target.value)} placeholder={"---\nprojectTitle: …\nproductType: interior-magazine\n---\n\n<!-- PAGE -->\npageNumber: 1\n…"} /></Dialog>;
 }

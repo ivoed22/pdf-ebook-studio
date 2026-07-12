@@ -126,7 +126,7 @@ export default function QCPanel({ issues }: { issues: Issue[] }) {
               </button>
               {issue.fix && (
                 <button
-                  className="mt-1.5 inline-flex items-center gap-1 rounded bg-white border border-stone-300 px-2 py-0.5 text-[11px] font-semibold text-stone-700 hover:border-stone-500 cursor-pointer"
+                  className="mt-2 inline-flex min-h-11 items-center gap-1 rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-semibold text-[var(--ink)] hover:border-[var(--primary)] cursor-pointer"
                   onClick={() => applyFix(issue.fix!)}
                 >
                   <Icon name="check" size={11} /> {t("fix")}

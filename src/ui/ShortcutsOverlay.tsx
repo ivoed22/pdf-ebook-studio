@@ -1,4 +1,5 @@
 import { useT } from "../i18n/strings";
+import { Dialog } from "./kit/Dialog";
 
 export default function ShortcutsOverlay({ onClose }: { onClose: () => void }) {
   const t = useT();
@@ -9,9 +10,7 @@ export default function ShortcutsOverlay({ onClose }: { onClose: () => void }) {
     ["?", t("scHelp")],
   ];
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 className="font-display text-lg font-semibold text-stone-900 mb-4">{t("shortcuts")}</h2>
+    <Dialog title={t("shortcuts")} onClose={onClose} maxWidth="max-w-sm">
         <table className="w-full text-sm">
           <tbody>
             {rows.map(([keys, label]) => (
@@ -26,7 +25,6 @@ export default function ShortcutsOverlay({ onClose }: { onClose: () => void }) {
             ))}
           </tbody>
         </table>
-      </div>
-    </div>
+    </Dialog>
   );
 }

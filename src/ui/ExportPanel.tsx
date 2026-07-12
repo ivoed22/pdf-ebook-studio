@@ -152,15 +152,15 @@ export default function ExportPanel({ errors }: { errors: number }) {
       </div>
 
       {busy && (
-        <div className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#160f2b]/55 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-[var(--shadow-lg)]" role="dialog" aria-modal="true" aria-labelledby="export-progress-title" aria-describedby="export-progress-status">
             <div className="flex items-center gap-2.5 mb-3">
               <span className="h-4 w-4 rounded-full border-2 border-stone-300 border-t-amber-700 animate-spin" />
-              <h3 className="font-display font-semibold text-stone-900">
+              <h3 id="export-progress-title" className="font-display font-semibold text-stone-900">
                 {t("exporting")}: {jobLabel}
               </h3>
             </div>
-            <div className="max-h-52 overflow-y-auto">
+            <div id="export-progress-status" className="max-h-52 overflow-y-auto" role="status" aria-live="polite">
               {steps.map((s, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs text-stone-600 py-0.5">
                   {i === steps.length - 1 ? (

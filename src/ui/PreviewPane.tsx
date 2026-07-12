@@ -42,6 +42,7 @@ export default function PreviewPane() {
   const [error, setError] = useState("");
   const [zoom, setZoom] = useState(1);
   const [gridMode, setGridMode] = useState(false);
+  const [retry, setRetry] = useState(0);
   const renderSeq = useRef(0);
 
   const langPages = useMemo(
@@ -95,7 +96,7 @@ export default function PreviewPane() {
       }
     }, 350); // debounce while typing
     return () => clearTimeout(timer);
-  }, [project, images, selectedPageId, cacheKey, gridMode]);
+  }, [project, images, selectedPageId, cacheKey, gridMode, retry]);
 
   if (!project) return null;
   if (!selectedPageId && !gridMode) {
@@ -108,33 +109,35 @@ export default function PreviewPane() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center gap-1 px-3 py-1.5 shrink-0">
-        <span className="text-[11px] text-stone-400 pl-1">
+      <div className="studio-panel flex min-h-14 shrink-0 flex-wrap items-center justify-center gap-1 border-b px-2 py-1 sm:flex-nowrap sm:justify-start sm:overflow-x-auto sm:px-3 sm:py-0">
+        <span className="hidden whitespace-nowrap pl-1 text-xs text-[var(--muted)] sm:block" role="status" aria-live="polite">
           {status === "rendering" && !gridMode ? t("rendering") : t("livePreview")}
         </span>
         <div className="mx-auto flex items-center gap-1">
           <button
-            className="btn-ghost text-xs px-1.5 py-0.5"
+            className="icon-button"
             disabled={currentIndex <= 0}
             onClick={() => selectPage(langPages[currentIndex - 1].id)}
+            aria-label="Vorige pagina"
           >
             <Icon name="left" size={13} />
           </button>
-          <span className="text-[11px] text-stone-500 min-w-24 text-center">
+          <span className="min-w-24 text-center text-xs font-semibold text-[var(--muted)]">
             {currentIndex >= 0
               ? t("pageOf", { a: currentIndex + 1, b: langPages.length })
               : `${langPages.length}`}
           </span>
           <button
-            className="btn-ghost text-xs px-1.5 py-0.5"
+            className="icon-button"
             disabled={currentIndex < 0 || currentIndex >= langPages.length - 1}
             onClick={() => selectPage(langPages[currentIndex + 1].id)}
+            aria-label="Volgende pagina"
           >
             <Icon name="right" size={13} />
           </button>
         </div>
         <button
-          className={`btn text-xs px-2 py-0.5 gap-1 ${gridMode ? "bg-stone-900 text-white" : "text-stone-500 hover:bg-stone-200"}`}
+          className={`btn whitespace-nowrap px-3 ${gridMode ? "bg-[var(--surface-strong)] text-white" : "text-[var(--muted)] hover:bg-[var(--primary-soft)]"}`}
           onClick={() => setGridMode((g) => !g)}
           title={gridMode ? t("onePage") : t("allPages")}
         >
@@ -143,11 +146,11 @@ export default function PreviewPane() {
         </button>
         {!gridMode && (
           <>
-            <button className="btn-ghost text-xs px-2 py-0.5" onClick={() => setZoom((z) => Math.max(0.4, z - 0.15))}>
+            <button className="icon-button" aria-label="Uitzoomen" onClick={() => setZoom((z) => Math.max(0.4, z - 0.15))}>
               −
             </button>
-            <span className="text-[11px] text-stone-500 w-10 text-center">{Math.round(zoom * 100)}%</span>
-            <button className="btn-ghost text-xs px-2 py-0.5" onClick={() => setZoom((z) => Math.min(2.2, z + 0.15))}>
+            <span className="w-11 text-center text-xs font-semibold text-[var(--muted)]">{Math.round(zoom * 100)}%</span>
+            <button className="icon-button" aria-label="Inzoomen" onClick={() => setZoom((z) => Math.min(2.2, z + 0.15))}>
               +
             </button>
           </>
@@ -159,16 +162,18 @@ export default function PreviewPane() {
           setGridMode(false);
         }} />
       ) : (
-        <div className="flex-1 overflow-auto p-6 flex items-start justify-center">
+        <div className="flex flex-1 items-start justify-center overflow-auto p-3 sm:p-6">
           {status === "error" ? (
             <div className="max-w-sm rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-700">
               <p className="font-semibold mb-1">{t("previewFailed")}</p>
               <p className="text-xs">{error}</p>
+              <button className="btn-secondary mt-4" onClick={() => setRetry((value) => value + 1)}>Opnieuw proberen</button>
             </div>
           ) : (
             <canvas
               ref={canvasRef}
-              className="shadow-lg rounded-sm bg-white"
+              className="max-w-[calc(100vw-1.5rem)] rounded-sm bg-white shadow-xl lg:max-w-none"
+              aria-label={t("livePreview")}
               style={{
                 width: `${446 * zoom}px`,
                 opacity: status === "rendering" ? 0.6 : 1,
@@ -247,7 +252,7 @@ function PreviewGrid({ onPick }: { onPick: (pageId: string) => void }) {
         {items.map((item) => (
           <button
             key={item.pageId || item.pageNumber}
-            className="group text-left cursor-pointer"
+            className="group min-h-11 text-left cursor-pointer"
             onClick={() => item.pageId && onPick(item.pageId)}
           >
             <img
