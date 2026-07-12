@@ -1,193 +1,164 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useStudio } from "../store/useStudio";
+import { useLayout, type WorkSection } from "../store/useLayout";
 import { validateProject, errorCount } from "../core/validation/engine";
 import { useT } from "../i18n/strings";
 import PageList from "./PageList";
-import PageEditor from "./PageEditor";
-import PreviewPane from "./PreviewPane";
-import AssetManager from "./AssetManager";
-import PaletteManager from "./PaletteManager";
-import QCPanel from "./QCPanel";
-import ExportPanel from "./ExportPanel";
-import ProjectSettings from "./ProjectSettings";
 import ShortcutsOverlay from "./ShortcutsOverlay";
+import { BottomNav } from "./kit/BottomNav";
 import { Icon } from "./kit/Icon";
 import { LangToggle } from "./kit/LangToggle";
 
-type Tab = "page" | "assets" | "palettes" | "qc" | "export" | "settings";
+const PageEditor = lazy(() => import("./PageEditor"));
+const PreviewPane = lazy(() => import("./PreviewPane"));
+const AssetManager = lazy(() => import("./AssetManager"));
+const PaletteManager = lazy(() => import("./PaletteManager"));
+const QCPanel = lazy(() => import("./QCPanel"));
+const ExportPanel = lazy(() => import("./ExportPanel"));
+const ProjectSettings = lazy(() => import("./ProjectSettings"));
 
-function isTypingTarget(el: EventTarget | null): boolean {
-  return (
-    el instanceof HTMLElement &&
-    (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable)
-  );
+function isTypingTarget(element: EventTarget | null): boolean {
+  return element instanceof HTMLElement && (element.tagName === "INPUT" || element.tagName === "TEXTAREA" || element.tagName === "SELECT" || element.isContentEditable);
 }
 
-export default function EditorScreen() {
-  const project = useStudio((s) => s.project);
-  const images = useStudio((s) => s.images);
-  const closeProject = useStudio((s) => s.closeProject);
-  const activeLanguage = useStudio((s) => s.activeLanguage);
-  const setActiveLanguage = useStudio((s) => s.setActiveLanguage);
-  const saveState = useStudio((s) => s.saveState);
-  const canUndo = useStudio((s) => s.past.length > 0);
-  const canRedo = useStudio((s) => s.future.length > 0);
-  const undo = useStudio((s) => s.undo);
-  const redo = useStudio((s) => s.redo);
-  const t = useT();
-  const [tab, setTab] = useState<Tab>("page");
-  const [helpOpen, setHelpOpen] = useState(false);
+function PanelFallback() {
+  return <div className="flex h-full min-h-40 items-center justify-center text-sm text-[var(--muted)]" role="status"><span className="animate-pulse">Werkruimte laden…</span></div>;
+}
 
-  const issues = useMemo(
-    () => (project ? validateProject(project, images) : []),
-    [project, images],
-  );
+const SECTIONS: { id: WorkSection; label: string; icon: string }[] = [
+  { id: "content", label: "Inhoud", icon: "edit" },
+  { id: "media", label: "Media", icon: "image" },
+  { id: "style", label: "Stijl", icon: "palette" },
+  { id: "qc", label: "Controle", icon: "shield" },
+  { id: "export", label: "Export", icon: "export" },
+  { id: "project", label: "Project", icon: "settings" },
+];
+
+export default function EditorScreen() {
+  const project = useStudio((state) => state.project);
+  const images = useStudio((state) => state.images);
+  const closeProject = useStudio((state) => state.closeProject);
+  const activeLanguage = useStudio((state) => state.activeLanguage);
+  const setActiveLanguage = useStudio((state) => state.setActiveLanguage);
+  const saveState = useStudio((state) => state.saveState);
+  const canUndo = useStudio((state) => state.past.length > 0);
+  const canRedo = useStudio((state) => state.future.length > 0);
+  const undo = useStudio((state) => state.undo);
+  const redo = useStudio((state) => state.redo);
+  const t = useT();
+  const layout = useLayout();
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [desktop, setDesktop] = useState(() => window.matchMedia("(min-width: 1024px)").matches);
+
+  const issues = useMemo(() => project ? validateProject(project, images) : [], [project, images]);
   const errors = errorCount(issues);
 
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      const s = useStudio.getState();
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
-        e.preventDefault();
-        e.shiftKey ? s.redo() : s.undo();
+    function onKey(event: KeyboardEvent) {
+      const studio = useStudio.getState();
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        event.shiftKey ? studio.redo() : studio.undo();
         return;
       }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
-        e.preventDefault();
-        s.redo();
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "y") {
+        event.preventDefault();
+        studio.redo();
         return;
       }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") {
-        e.preventDefault();
-        if (s.selectedPageId) s.duplicatePage(s.selectedPageId);
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        if (studio.selectedPageId) studio.duplicatePage(studio.selectedPageId);
         return;
       }
-      if (isTypingTarget(e.target)) return;
-      if (e.key === "PageUp" || e.key === "PageDown") {
-        e.preventDefault();
-        const pages = (s.project?.pages ?? [])
-          .filter((p) => p.language === s.activeLanguage)
-          .sort((a, b) => a.pageNumber - b.pageNumber);
-        const idx = pages.findIndex((p) => p.id === s.selectedPageId);
-        const next = pages[idx + (e.key === "PageDown" ? 1 : -1)];
-        if (next) s.selectPage(next.id);
+      if (isTypingTarget(event.target)) return;
+      if (event.key === "PageUp" || event.key === "PageDown") {
+        event.preventDefault();
+        const pages = (studio.project?.pages ?? []).filter((page) => page.language === studio.activeLanguage).sort((a, b) => a.pageNumber - b.pageNumber);
+        const index = pages.findIndex((page) => page.id === studio.selectedPageId);
+        const next = pages[index + (event.key === "PageDown" ? 1 : -1)];
+        if (next) studio.selectPage(next.id);
         return;
       }
-      if (e.key === "?") setHelpOpen((h) => !h);
+      if (event.key === "?") setHelpOpen((open) => !open);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1024px)");
+    const update = () => setDesktop(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
   if (!project) return null;
 
-  const tabs: { id: Tab; label: string; badge?: number }[] = [
-    { id: "page", label: t("tabPage") },
-    { id: "assets", label: t("tabImages"), badge: images.size || undefined },
-    { id: "palettes", label: t("tabPalettes") },
-    { id: "qc", label: t("tabQc"), badge: issues.length || undefined },
-    { id: "export", label: t("tabExport") },
-    { id: "settings", label: t("tabProject") },
-  ];
+  function selectSection(section: WorkSection) {
+    layout.setWorkSection(section);
+    layout.setMobileMode(section === "content" ? "edit" : "more");
+  }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="lg:hidden p-3 text-center text-xs text-amber-800 bg-amber-50 border-b border-amber-200">
-        {t("narrowScreen")}
-      </div>
-      <header className="flex items-center gap-3 border-b border-stone-200 bg-white px-4 py-2 shrink-0">
-        <button className="btn-ghost text-sm" onClick={closeProject}>
-          {t("backToProjects")}
-        </button>
-        <div className="min-w-0">
-          <h1 className="font-display font-semibold text-stone-900 truncate leading-tight">
-            {project.projectMeta.title}
-          </h1>
-          <span className={`text-[10px] ${saveState === "saved" ? "text-emerald-600" : "text-stone-400"}`}>
-            {saveState === "saved" ? t("saved") : t("saving")}
-          </span>
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[var(--canvas)]">
+      <header className="studio-panel z-20 flex min-h-16 shrink-0 items-center gap-2 border-b px-2 sm:px-4">
+        <button className="icon-button" aria-label={t("backToProjects")} onClick={closeProject}><Icon name="left" size={20} /></button>
+        <div className="min-w-0 flex-1 sm:flex-none sm:max-w-xs">
+          <h1 className="truncate font-display text-base font-semibold text-[var(--ink)] sm:text-lg">{project.projectMeta.title}</h1>
+          <span className={`flex items-center gap-1 text-xs font-semibold ${saveState === "saved" ? "text-[var(--success)]" : "text-[var(--muted)]"}`} role="status" aria-live="polite"><span className={`h-1.5 w-1.5 rounded-full ${saveState === "saved" ? "bg-[var(--success)]" : "animate-pulse bg-[var(--accent)]"}`} />{saveState === "saved" ? t("saved") : t("saving")}</span>
         </div>
-        <div className="flex items-center gap-0.5 ml-2">
-          <button
-            className="btn-ghost px-1.5 py-1"
-            title={`${t("undo")} (Ctrl+Z)`}
-            disabled={!canUndo}
-            onClick={undo}
-          >
-            <Icon name="undo" size={14} />
-          </button>
-          <button
-            className="btn-ghost px-1.5 py-1"
-            title={`${t("redo")} (Ctrl+Y)`}
-            disabled={!canRedo}
-            onClick={redo}
-          >
-            <Icon name="redo" size={14} />
-          </button>
+        <div className="hidden items-center gap-1 sm:flex">
+          <button className="icon-button" aria-label={`${t("undo")} (Ctrl+Z)`} disabled={!canUndo} onClick={undo}><Icon name="undo" size={17} /></button>
+          <button className="icon-button" aria-label={`${t("redo")} (Ctrl+Y)`} disabled={!canRedo} onClick={redo}><Icon name="redo" size={17} /></button>
         </div>
-        <div className="ml-auto flex items-center gap-3">
-          {project.languageVersions.length > 1 && (
-            <div className="flex rounded-md border border-stone-300 overflow-hidden">
-              {project.languageVersions.map((lang) => (
-                <button
-                  key={lang}
-                  className={`px-3 py-1 text-xs font-semibold cursor-pointer ${
-                    activeLanguage === lang ? "bg-stone-900 text-white" : "bg-white text-stone-500"
-                  }`}
-                  onClick={() => setActiveLanguage(lang)}
-                >
-                  {lang.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          )}
-          <button
-            className={`btn text-xs ${errors ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}
-            onClick={() => setTab("qc")}
-          >
-            {errors ? t("errorsN", { n: errors }) : t("qcClean")}
-          </button>
-          <LangToggle />
+        <div className="ml-auto flex items-center gap-2">
+          {project.languageVersions.length > 1 && <div className="hidden overflow-hidden rounded-xl border border-[var(--border)] sm:flex" role="group" aria-label="Documenttaal">{project.languageVersions.map((language) => <button key={language} className={`min-h-11 min-w-11 px-3 text-xs font-bold ${activeLanguage === language ? "bg-[var(--surface-strong)] text-white" : "bg-white text-[var(--muted)]"}`} aria-pressed={activeLanguage === language} onClick={() => setActiveLanguage(language)}>{language.toUpperCase()}</button>)}</div>}
+          <div className="hidden sm:block"><button className={`btn ${errors ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`} onClick={() => selectSection("qc")}><Icon name="shield" size={16} />{errors ? t("errorsN", { n: errors }) : t("qcClean")}</button></div>
+          <div className="hidden md:block"><LangToggle /></div>
+          <div className="hidden lg:block"><button className="icon-button" aria-label="Sneltoetsen" onClick={() => setHelpOpen(true)}>?</button></div>
         </div>
       </header>
 
-      <div className="flex flex-1 min-h-0">
-        <aside className="w-60 shrink-0 border-r border-stone-200 bg-white overflow-y-auto">
-          <PageList />
-        </aside>
-
-        <main className="flex-1 min-w-0 bg-stone-200/60 overflow-hidden">
-          <PreviewPane />
-        </main>
-
-        <aside className="w-[26rem] shrink-0 border-l border-stone-200 bg-white flex flex-col">
-          <nav className="flex border-b border-stone-200 shrink-0">
-            {tabs.map((tb) => (
-              <button
-                key={tb.id}
-                className={`flex-1 px-1 py-2.5 text-[10px] font-semibold uppercase tracking-wide cursor-pointer border-b-2 ${
-                  tab === tb.id
-                    ? "border-amber-700 text-stone-900"
-                    : "border-transparent text-stone-400 hover:text-stone-600"
-                }`}
-                onClick={() => setTab(tb.id)}
-              >
-                {tb.label}
-                {tb.badge ? <span className="ml-1 text-amber-700">{tb.badge}</span> : null}
-              </button>
-            ))}
-          </nav>
-          <div className="flex-1 overflow-y-auto">
-            {tab === "page" && <PageEditor />}
-            {tab === "assets" && <AssetManager />}
-            {tab === "palettes" && <PaletteManager />}
-            {tab === "qc" && <QCPanel issues={issues} />}
-            {tab === "export" && <ExportPanel errors={errors} />}
-            {tab === "settings" && <ProjectSettings />}
-          </div>
-        </aside>
+      <div id="main-content" className="min-h-0 flex-1">
+        {desktop ? <div className="flex h-full min-h-0">
+          {layout.pagePanelOpen && <aside className="studio-panel min-w-56 max-w-96 shrink-0 resize-x overflow-auto border-r" style={{ width: layout.pagePanelWidth }} aria-label="Pagina's"><PageList /></aside>}
+          <main className="relative min-w-0 flex-1 overflow-hidden bg-[#ded8eb]">
+            <div className="absolute left-3 top-3 z-10 flex gap-1 rounded-2xl border border-white/70 bg-white/90 p-1 shadow-sm backdrop-blur">
+              <button className="icon-button" aria-label={layout.pagePanelOpen ? "Paginapaneel sluiten" : "Paginapaneel openen"} aria-pressed={layout.pagePanelOpen} onClick={() => layout.setPagePanelOpen(!layout.pagePanelOpen)}><Icon name="pages" size={18} /></button>
+              <button className="icon-button" aria-label={layout.inspectorOpen ? "Eigenschappenpaneel sluiten" : "Eigenschappenpaneel openen"} aria-pressed={layout.inspectorOpen} onClick={() => layout.setInspectorOpen(!layout.inspectorOpen)}><Icon name="settings" size={18} /></button>
+            </div>
+            <Suspense fallback={<PanelFallback />}><PreviewPane /></Suspense>
+          </main>
+          {layout.inspectorOpen && <aside className="studio-panel flex min-w-96 max-w-[36rem] shrink-0 flex-col border-l" style={{ width: layout.inspectorWidth }} aria-label="Eigenschappen"><WorkTabs active={layout.workSection} issues={issues.length} images={images.size} onChange={layout.setWorkSection} /><div className="min-h-0 flex-1 overflow-y-auto"><Suspense fallback={<PanelFallback />}><WorkContent section={layout.workSection} issues={issues} errors={errors} /></Suspense></div></aside>}
+        </div> : <div className="flex h-full min-h-0 flex-col">
+          <main className="min-h-0 flex-1 overflow-hidden">
+            {layout.mobileMode === "pages" && <div className="h-full overflow-y-auto bg-white"><PageList /></div>}
+            {layout.mobileMode === "preview" && <Suspense fallback={<PanelFallback />}><PreviewPane /></Suspense>}
+            {layout.mobileMode === "edit" && <div className="h-full overflow-y-auto bg-white"><Suspense fallback={<PanelFallback />}><PageEditor /></Suspense></div>}
+            {layout.mobileMode === "more" && <div className="flex h-full min-h-0 flex-col bg-white"><WorkTabs active={layout.workSection} issues={issues.length} images={images.size} onChange={layout.setWorkSection} compact /><div className="min-h-0 flex-1 overflow-y-auto"><Suspense fallback={<PanelFallback />}><WorkContent section={layout.workSection} issues={issues} errors={errors} /></Suspense></div></div>}
+          </main>
+          <BottomNav value={layout.mobileMode} onChange={(mode) => {
+            if (mode === "more" && layout.workSection === "content") layout.setWorkSection("media");
+            layout.setMobileMode(mode);
+          }} />
+        </div>}
       </div>
       {helpOpen && <ShortcutsOverlay onClose={() => setHelpOpen(false)} />}
     </div>
   );
+}
+
+function WorkTabs({ active, issues, images, onChange, compact = false }: { active: WorkSection; issues: number; images: number; onChange: (section: WorkSection) => void; compact?: boolean }) {
+  const visibleSections = compact ? SECTIONS.filter((section) => section.id !== "content") : SECTIONS;
+  return <nav className={`shrink-0 border-b border-[var(--border)] bg-white ${compact ? "overflow-x-auto" : ""}`} aria-label="Werkgebieden"><div className={`flex ${compact ? "min-w-max px-2" : "grid grid-cols-3 gap-1 p-2"}`}>{visibleSections.map((section) => { const badge = section.id === "media" ? images : section.id === "qc" ? issues : 0; const selected = active === section.id; return <button key={section.id} className={`flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors ${selected ? "bg-[var(--primary-soft)] text-[var(--primary-strong)]" : "text-[var(--muted)] hover:bg-[var(--canvas)]"}`} aria-current={selected ? "page" : undefined} onClick={() => onChange(section.id)}><Icon name={section.icon} size={17} />{section.label}{badge > 0 && <span className="inline-flex min-w-5 justify-center rounded-full bg-white px-1.5 text-xs text-[var(--primary-strong)]">{badge}</span>}</button>; })}</div></nav>;
+}
+
+function WorkContent({ section, issues, errors }: { section: WorkSection; issues: ReturnType<typeof validateProject>; errors: number }): ReactNode {
+  if (section === "content") return <PageEditor />;
+  if (section === "media") return <AssetManager />;
+  if (section === "style") return <PaletteManager />;
+  if (section === "qc") return <QCPanel issues={issues} />;
+  if (section === "export") return <ExportPanel errors={errors} />;
+  return <ProjectSettings />;
 }

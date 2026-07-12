@@ -78,6 +78,7 @@ export default function PageEditor() {
 
   function fieldEditor(field: string, isRequired: boolean) {
     const value = page!.fields[field];
+    const inputId = `page-field-${page!.id}-${field}`;
 
     if (field === "palette") {
       return <PaletteFieldEditor key={field} pageId={page!.id} value={value} />;
@@ -90,11 +91,12 @@ export default function PageEditor() {
       const focus = (page!.fields[`${field}Focus`] as ImageFocus) || "center";
       return (
         <div key={field} className="mb-3">
-          <label className="label">
+          <label className="label" htmlFor={inputId}>
             {labelFor(field)} {isRequired && <span className="text-amber-700">*</span>}
           </label>
           <div className="flex gap-1.5">
             <input
+              id={inputId}
               className={`input ${missing ? "border-red-400" : ""}`}
               value={current}
               placeholder="page-01-cover.jpg"
@@ -139,7 +141,7 @@ export default function PageEditor() {
                 <button
                   key={opt.value}
                   title={t(opt.labelKey)}
-                  className={`h-5 w-5 rounded border text-[9px] font-bold cursor-pointer transition-colors ${
+                  className={`h-11 min-w-11 rounded-xl border text-xs font-bold cursor-pointer transition-colors ${
                     focus === opt.value
                       ? "border-amber-700 bg-amber-100 text-amber-800"
                       : "border-stone-200 text-stone-400 hover:border-stone-400"
@@ -163,11 +165,12 @@ export default function PageEditor() {
       const list = Array.isArray(value) ? (value as string[]).map(String) : value ? [String(value)] : [];
       return (
         <div key={field} className="mb-3">
-          <label className="label">
+          <label className="label" htmlFor={inputId}>
             {labelFor(field)} {isRequired && <span className="text-amber-700">*</span>}
             <span className="normal-case font-normal text-stone-400">{t("onePerLine")}</span>
           </label>
           <textarea
+            id={inputId}
             className="input font-mono text-xs"
             rows={Math.min(Math.max(list.length + 1, 3), 10)}
             value={list.join("\n")}
@@ -187,10 +190,11 @@ export default function PageEditor() {
     if (LONG_FIELDS.has(field)) {
       return (
         <div key={field} className="mb-3">
-          <label className="label">
+          <label className="label" htmlFor={inputId}>
             {labelFor(field)} {isRequired && <span className="text-amber-700">*</span>}
           </label>
           <textarea
+            id={inputId}
             className="input"
             rows={4}
             value={str}
@@ -201,10 +205,11 @@ export default function PageEditor() {
     }
     return (
       <div key={field} className="mb-3">
-        <label className="label">
+        <label className="label" htmlFor={inputId}>
           {labelFor(field)} {isRequired && <span className="text-amber-700">*</span>}
         </label>
         <input
+          id={inputId}
           className="input"
           value={str}
           onChange={(e) => setPageField(page!.id, field, e.target.value)}
@@ -223,8 +228,9 @@ export default function PageEditor() {
 
       <div className="grid grid-cols-3 gap-2 mb-4">
         <div>
-          <label className="label">{t("pageNumber")}</label>
+          <label className="label" htmlFor="page-number">{t("pageNumber")}</label>
           <input
+            id="page-number"
             className="input"
             type="number"
             min={1}
@@ -233,8 +239,9 @@ export default function PageEditor() {
           />
         </div>
         <div className="col-span-2">
-          <label className="label">{t("language")}</label>
+          <label className="label" htmlFor="page-language">{t("language")}</label>
           <select
+            id="page-language"
             className="input cursor-pointer"
             value={page.language}
             onChange={(e) => setPageLanguage(page.id, e.target.value as (typeof LANGUAGES)[number])}
@@ -245,7 +252,7 @@ export default function PageEditor() {
         </div>
       </div>
 
-      <label className="label">{t("template")}</label>
+      <span className="label">{t("template")}</span>
       <button
         className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-left hover:border-stone-500 transition-colors cursor-pointer mb-1"
         onClick={() => setPickerOpen(true)}
@@ -346,10 +353,11 @@ function PaletteFieldEditor({ pageId, value }: { pageId: string; value: FieldVal
             onChange={(e) => update(colors.map((c, j) => (j === i ? { ...c, hex: e.target.value } : c)))}
           />
           <button
-            className="text-stone-400 hover:text-red-600 text-xs px-1 cursor-pointer shrink-0"
+            className="icon-button text-red-700 shrink-0"
+            aria-label={`Kleur ${i + 1} verwijderen`}
             onClick={() => update(colors.filter((_, j) => j !== i))}
           >
-            ✕
+            <span aria-hidden>×</span>
           </button>
         </div>
       ))}

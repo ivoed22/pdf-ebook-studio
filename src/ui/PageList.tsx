@@ -40,12 +40,12 @@ export default function PageList() {
   }
 
   return (
-    <div className="p-3">
+    <div className="p-4">
       <div className="flex items-center justify-between mb-2">
         <span className="panel-title">
           {t("pagesHeader")} · {activeLanguage.toUpperCase()}
         </span>
-        <button className="btn-ghost text-xs px-2 py-1" onClick={handleAdd}>
+        <button className="btn-ghost px-3" onClick={handleAdd}>
           {t("addPage")}
         </button>
       </div>
@@ -60,8 +60,8 @@ export default function PageList() {
       {pages.length === 0 && (
         <p className="text-xs text-stone-400 py-6 text-center">{t("noPagesInLang")}</p>
       )}
-      <ul className="space-y-1" title={t("dragHint")}>
-        {pages.map((page) => (
+      <ul className="space-y-2" aria-label={`${t("pagesHeader")} ${activeLanguage.toUpperCase()}`}>
+        {pages.map((page, index) => (
           <PageRow
             key={page.id}
             page={page}
@@ -79,6 +79,8 @@ export default function PageList() {
               setDragId(null);
               setDropTargetId(null);
             }}
+            onMoveUp={index > 0 ? () => useStudio.getState().reorderPage(page.id, pages[index - 1].id) : undefined}
+            onMoveDown={index < pages.length - 1 ? () => useStudio.getState().reorderPage(page.id, pages[index + 1].id) : undefined}
           />
         ))}
       </ul>
@@ -95,6 +97,8 @@ function PageRow({
   onDragOverRow,
   onDrop,
   onDragEnd,
+  onMoveUp,
+  onMoveDown,
 }: {
   page: Page;
   selected: boolean;
@@ -104,6 +108,8 @@ function PageRow({
   onDragOverRow: () => void;
   onDrop: () => void;
   onDragEnd: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
 }) {
   const project = useStudio((s) => s.project)!;
   const images = useStudio((s) => s.images);
@@ -150,59 +156,40 @@ function PageRow({
         onDrop();
       }}
       onDragEnd={onDragEnd}
-      className={`group rounded-md border px-2 py-2 cursor-pointer transition-colors ${
-        selected ? "border-amber-700 bg-amber-50" : "border-stone-200 hover:border-stone-400"
-      } ${isDropTarget ? "border-t-2 border-t-amber-600" : ""}`}
-      onClick={onSelect}
+      className={`group rounded-xl border p-2 transition-colors ${
+        selected ? "border-[var(--primary)] bg-[var(--primary-soft)]" : "border-[var(--border)] bg-white hover:border-[var(--primary)]"
+      } ${isDropTarget ? "border-t-2 border-t-[var(--primary)]" : ""}`}
     >
       <div className="flex items-center gap-2">
-        <span className="text-stone-300 group-hover:text-stone-400 cursor-grab shrink-0">
-          <Icon name="drag" size={12} />
-        </span>
-        <span className="w-9 h-12 rounded-sm border border-stone-200 bg-white overflow-hidden shrink-0">
-          {thumb ? (
-            <img src={thumb} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <span className="w-full h-full flex items-center justify-center text-stone-200">
-              <Icon name="page" size={12} />
+        <button className="flex min-h-14 min-w-0 flex-1 items-center gap-2 rounded-lg text-left" aria-pressed={selected} aria-label={`Pagina ${page.pageNumber}: ${typeof page.fields.title === "string" && page.fields.title ? page.fields.title : t("untitled")}`} onClick={onSelect}>
+          <span className="hidden text-[var(--muted)] cursor-grab shrink-0 sm:block" aria-hidden><Icon name="drag" size={12} /></span>
+          <span className="w-9 h-12 rounded-sm border border-stone-200 bg-white overflow-hidden shrink-0">{thumb ? <img src={thumb} alt="" className="w-full h-full object-cover" /> : <span className="w-full h-full flex items-center justify-center text-stone-200"><Icon name="page" size={12} /></span>}</span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5">
+              <span className={`text-xs font-bold px-1.5 py-0.5 rounded shrink-0 ${selected ? "bg-[var(--primary)] text-white" : "bg-[var(--surface-soft)] text-[var(--muted)]"}`}>
+                {page.pageNumber}
+              </span>
+              <span className="truncate text-sm font-semibold text-[var(--ink)]">{typeof page.fields.title === "string" && page.fields.title ? page.fields.title : t("untitled")}</span>
             </span>
-          )}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`text-[9px] font-bold px-1 py-px rounded shrink-0 ${
-                selected ? "bg-amber-700 text-white" : "bg-stone-100 text-stone-500"
-              }`}
-            >
-              {page.pageNumber}
-            </span>
-            <span className="text-xs font-medium text-stone-800 truncate">
-              {typeof page.fields.title === "string" && page.fields.title
-                ? page.fields.title
-                : t("untitled")}
-            </span>
-          </div>
-          <div className="text-[10px] text-stone-400 truncate mt-0.5">
-            {template?.name ?? page.template ?? t("noTemplate")}
-          </div>
-        </div>
-        <span className="hidden group-hover:flex flex-col gap-0.5 shrink-0">
+            <span className="mt-0.5 block truncate text-xs text-[var(--muted)]">{template?.name ?? page.template ?? t("noTemplate")}</span>
+          </span>
+        </button>
+        <span className="flex shrink-0 items-center gap-0.5">
+          <button className="icon-button h-9 w-9" aria-label={`Pagina ${page.pageNumber} omhoog`} disabled={!onMoveUp} onClick={onMoveUp}><Icon name="up" size={14} /></button>
+          <button className="icon-button h-9 w-9" aria-label={`Pagina ${page.pageNumber} omlaag`} disabled={!onMoveDown} onClick={onMoveDown}><Icon name="down" size={14} /></button>
           <button
-            className="p-0.5 rounded text-stone-400 hover:text-stone-700 hover:bg-stone-100"
-            title={t("copy")}
-            onClick={(e) => {
-              e.stopPropagation();
+            className="icon-button h-9 w-9"
+            aria-label={`${t("copy")} pagina ${page.pageNumber}`}
+            onClick={() => {
               duplicatePage(page.id);
             }}
           >
             <Icon name="copy" size={11} />
           </button>
           <button
-            className="p-0.5 rounded text-stone-400 hover:text-red-600 hover:bg-red-50"
-            title={t("delete")}
-            onClick={async (e) => {
-              e.stopPropagation();
+            className="icon-button h-9 w-9 text-red-700"
+            aria-label={`${t("delete")} pagina ${page.pageNumber}`}
+            onClick={async () => {
               const ok = await confirmDialog({
                 title: t("removePageQ"),
                 message: t("removePageBody", { n: page.pageNumber }),
