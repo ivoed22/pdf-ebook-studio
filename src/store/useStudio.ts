@@ -1,11 +1,11 @@
 import { create } from "zustand";
-import type { FieldValue, ImageAsset, Language, Page, Palette, Project } from "../types/project";
-import { newId } from "../types/project";
+import type { FieldValue, ImageAsset, Language, Page, Palette, ProductionImageStatus, Project } from "../types/project";
+import { migrateProject, newId } from "../types/project";
 import * as db from "../core/storage/db";
 import { clearImageUrls, revokeImageUrl } from "../core/assets/imageStore";
 
 export type Screen = "dashboard" | "editor";
-export type SaveState = "saved" | "saving";
+export type SaveState = "saved" | "saving" | "error";
 
 const HISTORY_LIMIT = 50;
 /** Edits with the same label within this window collapse into one undo step. */
@@ -15,6 +15,7 @@ interface StudioState {
   projects: Project[];
   project: Project | null;
   images: Map<string, ImageAsset>;
+  imageRevision: number;
   screen: Screen;
   selectedPageId: string | null;
   activeLanguage: Language;
@@ -30,6 +31,7 @@ interface StudioState {
   removeProject(id: string): Promise<void>;
   duplicateProject(id: string, copySuffix: string): Promise<void>;
   updateProject(mutator: (p: Project) => void): void;
+  updateStoredProject(id: string, mutator: (p: Project) => void): Promise<void>;
 
   undo(): void;
   redo(): void;
@@ -50,6 +52,7 @@ interface StudioState {
 
   addImages(assets: ImageAsset[]): Promise<void>;
   removeImage(filename: string): Promise<void>;
+  setProductionStatus(filename: string, status: ProductionImageStatus, rejectionReason?: string): void;
 
   setPalettes(palettes: Palette[]): void;
 }
@@ -57,6 +60,7 @@ interface StudioState {
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let lastHistoryLabel = "";
 let lastHistoryTime = 0;
+const lastSnapshotAt = new Map<string, number>();
 
 export const useStudio = create<StudioState>((set, get) => {
   /** Snapshot the current project into the undo stack (call BEFORE mutating). */
@@ -84,9 +88,14 @@ export const useStudio = create<StudioState>((set, get) => {
     const snapshot = structuredClone(project);
     set({ saveState: "saving" });
     saveTimer = setTimeout(() => {
-      void db.saveProject(snapshot).then(() => {
+      void db.saveProject(snapshot).then(async () => {
         if (get().project?.id === snapshot.id) set({ saveState: "saved" });
-      });
+        const last = lastSnapshotAt.get(snapshot.id) ?? 0;
+        if (Date.now() - last >= 15 * 60 * 1000) {
+          await db.saveSnapshot(snapshot, "Automatische snapshot");
+          lastSnapshotAt.set(snapshot.id, Date.now());
+        }
+      }).catch(() => set({ saveState: "error" }));
     }, 300);
     set({
       project: { ...project },
@@ -103,6 +112,7 @@ export const useStudio = create<StudioState>((set, get) => {
     projects: [],
     project: null,
     images: new Map(),
+    imageRevision: 0,
     screen: "dashboard",
     selectedPageId: null,
     activeLanguage: "en",
@@ -112,7 +122,8 @@ export const useStudio = create<StudioState>((set, get) => {
     future: [],
 
     async init() {
-      const projects = await db.loadProjects();
+      const projects = (await db.loadProjects()).map((project) => migrateProject(project));
+      await Promise.all(projects.map((project) => db.saveProject(project)));
       projects.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
       set({ projects, loading: false });
     },
@@ -127,6 +138,7 @@ export const useStudio = create<StudioState>((set, get) => {
       set({
         project: structuredClone(project),
         images,
+        imageRevision: get().imageRevision + 1,
         screen: "editor",
         selectedPageId: project.pages[0]?.id ?? null,
         activeLanguage: project.languageVersions[0] ?? "en",
@@ -141,6 +153,7 @@ export const useStudio = create<StudioState>((set, get) => {
       set({
         project: null,
         images: new Map(),
+        imageRevision: get().imageRevision + 1,
         screen: "dashboard",
         selectedPageId: null,
         past: [],
@@ -168,7 +181,9 @@ export const useStudio = create<StudioState>((set, get) => {
       clone.id = newId();
       clone.projectMeta.title = `${clone.projectMeta.title} (${copySuffix})`;
       clone.createdAt = clone.updatedAt = new Date().toISOString();
-      for (const page of clone.pages) page.id = newId();
+      const pageIds = new Map<string, string>();
+      for (const page of clone.pages) { const old = page.id; page.id = newId(); pageIds.set(old, page.id); }
+      for (const record of clone.production?.images ?? []) if (record.pageId && pageIds.has(record.pageId)) record.pageId = pageIds.get(record.pageId);
       await db.saveProject(clone);
       const assets = await db.loadImages(id);
       for (const asset of assets) await db.saveImage(clone.id, asset);
@@ -313,6 +328,7 @@ export const useStudio = create<StudioState>((set, get) => {
       if (!page) return;
       checkpoint(`field-${pageId}-${field}`);
       page.fields = { ...page.fields, [field]: value };
+      page.contentRevision = (page.contentRevision ?? 0) + 1;
       persist();
     },
 
@@ -323,6 +339,7 @@ export const useStudio = create<StudioState>((set, get) => {
       checkpoint(`remove-field-${pageId}-${field}`);
       const { [field]: _removed, ...rest } = page.fields;
       page.fields = rest;
+      page.contentRevision = (page.contentRevision ?? 0) + 1;
       persist();
     },
 
@@ -332,6 +349,7 @@ export const useStudio = create<StudioState>((set, get) => {
       if (!page) return;
       checkpoint(`template-${pageId}`);
       page.template = template;
+      page.contentRevision = (page.contentRevision ?? 0) + 1;
       persist();
     },
 
@@ -363,8 +381,15 @@ export const useStudio = create<StudioState>((set, get) => {
         revokeImageUrl(asset.filename);
         next.set(asset.filename, asset);
         await db.saveImage(project.id, asset);
+        const record = project.production?.images.find((item) => item.filename === asset.filename);
+        if (record && record.status === "planned") {
+          record.status = "uploaded";
+          record.updatedAt = new Date().toISOString();
+        }
       }
       set({ images: next });
+      set({ imageRevision: get().imageRevision + 1 });
+      persist();
     },
 
     async removeImage(filename) {
@@ -375,6 +400,34 @@ export const useStudio = create<StudioState>((set, get) => {
       next.delete(filename);
       await db.deleteImage(project.id, filename);
       set({ images: next });
+      set({ imageRevision: get().imageRevision + 1 });
+      const record = project.production?.images.find((item) => item.filename === filename);
+      if (record) {
+        record.status = "planned";
+        record.updatedAt = new Date().toISOString();
+        persist();
+      }
+    },
+
+    async updateStoredProject(id, mutator) {
+      const source = get().projects.find((item) => item.id === id);
+      if (!source) return;
+      const updated = structuredClone(source);
+      mutator(updated);
+      updated.updatedAt = new Date().toISOString();
+      await db.saveProject(updated);
+      set({ projects: get().projects.map((item) => item.id === id ? updated : item) });
+    },
+
+    setProductionStatus(filename, status, rejectionReason) {
+      const { project } = get();
+      const record = project?.production?.images.find((item) => item.filename === filename);
+      if (!record) return;
+      checkpoint(`production-${filename}`);
+      record.status = status;
+      record.rejectionReason = status === "rejected" ? rejectionReason : undefined;
+      record.updatedAt = new Date().toISOString();
+      persist();
     },
 
     setPalettes(palettes) {

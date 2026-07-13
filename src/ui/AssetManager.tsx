@@ -39,8 +39,8 @@ export default function AssetManager() {
   return (
     <div className="p-4">
       <div
-        className={`rounded-lg border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
-          dragOver ? "border-amber-700 bg-amber-50" : "border-stone-300 hover:border-stone-400"
+        className={`cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
+          dragOver ? "border-[var(--primary)] bg-[var(--primary-soft)]" : "border-[var(--border)] hover:border-[var(--border-strong)]"
         }`}
         onClick={() => fileInput.current?.click()}
         onDragOver={(e) => {
@@ -54,8 +54,8 @@ export default function AssetManager() {
           void handleFiles(e.dataTransfer.files);
         }}
       >
-        <p className="text-sm font-medium text-stone-600">{t("dropImages")}</p>
-        <p className="text-[11px] text-stone-400 mt-1">
+        <p className="text-sm font-medium text-[var(--ink)]">{t("dropImages")}</p>
+        <p className="mt-1 text-xs text-[var(--muted)]">
           {t("dropImagesHint")}
           <br />
           {t("namingExample")}
@@ -73,19 +73,19 @@ export default function AssetManager() {
         />
       </div>
 
-      {notice && <p className="text-[11px] text-stone-500 mt-2">{notice}</p>}
+      {notice && <p className="mt-2 text-xs text-[var(--muted)]" role="status" aria-live="polite">{notice}</p>}
 
       <div className="mt-4">
         <div className="panel-title mb-2">
           {t("uploadedN", { n: images.size })}
         </div>
-        {sorted.length === 0 && <p className="text-xs text-stone-400">{t("noImagesYet")}</p>}
+        {sorted.length === 0 && <p className="text-xs text-[var(--muted)]">{t("noImagesYet")}</p>}
         <ul className="grid grid-cols-2 gap-2">
           {sorted.map((asset) => {
             const used = usedFilenames.has(asset.filename);
             return (
-              <li key={asset.filename} className="rounded-md border border-stone-200 overflow-hidden group">
-                <div className="aspect-[4/3] bg-stone-100">
+              <li key={asset.filename} draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "copy"; event.dataTransfer.setData("application/x-ebook-asset", asset.filename); }} className="group overflow-hidden rounded-xl border border-[var(--border)]" title="Sleep naar een afbeeldingsveld om toe te wijzen">
+                <div className="aspect-[4/3] bg-[var(--surface-soft)]">
                   <img
                     src={imageUrl(asset)}
                     alt={asset.filename}
@@ -94,19 +94,19 @@ export default function AssetManager() {
                   />
                 </div>
                 <div className="px-2 py-1.5">
-                  <div className="text-[10px] font-mono text-stone-600 truncate" title={asset.filename}>
+                  <div className="truncate font-mono text-xs text-[var(--ink)]" title={asset.filename}>
                     {asset.filename}
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
                     <span
-                      className={`text-[9px] font-semibold uppercase tracking-wide ${
-                        used ? "text-emerald-600" : "text-amber-600"
+                      className={`text-xs font-semibold uppercase tracking-wide ${
+                        used ? "text-[var(--success)]" : "text-[var(--warning)]"
                       }`}
                     >
                       {used ? t("inUse") : t("unused")}
                     </span>
                     <button
-                      className="inline-flex min-h-11 items-center rounded-lg px-2 text-xs font-semibold text-red-700 hover:bg-red-50"
+                      className="inline-flex min-h-11 items-center rounded-lg px-2 text-xs font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)]"
                       aria-label={`${asset.filename} verwijderen`}
                       onClick={() => void removeImage(asset.filename)}
                     >

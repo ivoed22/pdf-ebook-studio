@@ -38,12 +38,55 @@ export const FieldValueSchema = z.union([
 ]);
 export type FieldValue = z.infer<typeof FieldValueSchema>;
 
+export const ProductionImageStatusSchema = z.enum(["planned", "uploaded", "approved", "rejected"]);
+export type ProductionImageStatus = z.infer<typeof ProductionImageStatusSchema>;
+
+export const ProductionImageRecordSchema = z.object({
+  filename: z.string(),
+  pageId: z.string().optional(),
+  language: z.enum(LANGUAGES).optional(),
+  field: z.string().optional(),
+  templateId: z.string().optional(),
+  purpose: z.string().optional(),
+  orientation: z.enum(["landscape", "portrait", "square"]).optional(),
+  aspectRatio: z.string().optional(),
+  cropFocus: z.enum(["center", "top", "bottom", "left", "right"]).optional(),
+  cropZoom: z.number().min(1).max(3).optional(),
+  prompt: z.string(),
+  avoid: z.string().optional(),
+  batchId: z.string().optional(),
+  status: ProductionImageStatusSchema.default("planned"),
+  rejectionReason: z.string().optional(),
+  updatedAt: z.string(),
+});
+export type ProductionImageRecord = z.infer<typeof ProductionImageRecordSchema>;
+
+export const ProductionBatchSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  filenames: z.array(z.string()),
+  promptText: z.string().optional(),
+});
+export type ProductionBatch = z.infer<typeof ProductionBatchSchema>;
+
+export const ProductionPlanSchema = z.object({
+  qcStatus: z.enum(["needs-images", "pass"]).default("needs-images"),
+  images: z.array(ProductionImageRecordSchema).default([]),
+  batches: z.array(ProductionBatchSchema).default([]),
+  sourceMarkdown: z.string().optional(),
+});
+export type ProductionPlan = z.infer<typeof ProductionPlanSchema>;
+
 export const PageSchema = z.object({
   id: z.string(),
   pageNumber: z.number().int().positive(),
   template: z.string(),
   language: z.enum(LANGUAGES),
   fields: z.record(z.string(), FieldValueSchema),
+  translationKey: z.string().optional(),
+  contentRevision: z.number().int().nonnegative().optional(),
+  chapter: z.string().optional(),
+  translationSourceRevision: z.number().int().nonnegative().optional(),
 });
 export type Page = z.infer<typeof PageSchema>;
 
@@ -58,6 +101,14 @@ export const ProjectMetaSchema = z.object({
   outputProfile: z.enum(OUTPUT_PROFILES).default("etsy-digital-product"),
   author: z.string().optional(),
   year: z.string().optional(),
+  listing: z.record(z.string(), z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    tags: z.array(z.string()).max(13).optional(),
+    contents: z.string().optional(),
+    customerReadme: z.string().optional(),
+    thumbnailOrder: z.array(z.string()).optional(),
+  })).optional(),
 });
 export type ProjectMeta = z.infer<typeof ProjectMetaSchema>;
 
@@ -67,8 +118,15 @@ export const ProjectAssetsSchema = z.object({
 });
 export type ProjectAssets = z.infer<typeof ProjectAssetsSchema>;
 
+export const ProjectOrganizationSchema = z.object({
+  folder: z.string().optional(),
+  tags: z.array(z.string()).default([]),
+  favorite: z.boolean().default(false),
+  archived: z.boolean().default(false),
+});
+
 export const ProjectSchema = z.object({
-  schemaVersion: z.literal(1).default(1),
+  schemaVersion: z.union([z.literal(1), z.literal(2)]).default(2),
   id: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -77,8 +135,21 @@ export const ProjectSchema = z.object({
   assets: ProjectAssetsSchema,
   palettes: z.array(PaletteSchema).default([]),
   pages: z.array(PageSchema),
+  production: ProductionPlanSchema.optional(),
+  organization: ProjectOrganizationSchema.optional(),
 });
 export type Project = z.infer<typeof ProjectSchema>;
+
+export function migrateProject(input: unknown): Project {
+  const parsed = ProjectSchema.parse(input);
+  return {
+    ...parsed,
+    schemaVersion: 2,
+    production: parsed.production ?? { qcStatus: "needs-images", images: [], batches: [] },
+    organization: parsed.organization ?? { tags: [], favorite: false, archived: false },
+    pages: parsed.pages.map((page) => ({ ...page, contentRevision: page.contentRevision ?? 0 })),
+  };
+}
 
 /** Image asset stored in IndexedDB and referenced by filename from page fields. */
 export interface ImageAsset {
@@ -86,6 +157,8 @@ export interface ImageAsset {
   type: string;
   size: number;
   blob: Blob;
+  width?: number;
+  height?: number;
 }
 
 export function newId(): string {
@@ -100,7 +173,7 @@ export function createEmptyProject(partial: {
 }): Project {
   const now = new Date().toISOString();
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: newId(),
     createdAt: now,
     updatedAt: now,
@@ -115,6 +188,8 @@ export function createEmptyProject(partial: {
     assets: {},
     palettes: [],
     pages: [],
+    production: { qcStatus: "needs-images", images: [], batches: [] },
+    organization: { tags: [], favorite: false, archived: false },
   };
 }
 

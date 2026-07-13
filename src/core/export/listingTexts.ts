@@ -8,6 +8,8 @@ const TYPE_LABEL: Record<string, { en: string; nl: string }> = {
 };
 
 export function listingTitle(project: Project, language: Language): string {
+  const custom = project.projectMeta.listing?.[language]?.title?.trim();
+  if (custom) return custom;
   const label = TYPE_LABEL[project.projectMeta.productType]?.[language] ?? "Digital Ebook";
   const pages = project.pages.filter((p) => p.language === language).length;
   return language === "nl"
@@ -16,6 +18,8 @@ export function listingTitle(project: Project, language: Language): string {
 }
 
 export function listingDescription(project: Project, language: Language): string {
+  const custom = project.projectMeta.listing?.[language]?.description?.trim();
+  if (custom) return custom;
   const meta = project.projectMeta;
   const pages = project.pages.filter((p) => p.language === language);
   const titles = pages
@@ -67,6 +71,8 @@ export function listingDescription(project: Project, language: Language): string
 }
 
 export function listingTags(project: Project, language: Language): string {
+  const custom = project.projectMeta.listing?.[language]?.tags?.filter(Boolean).slice(0, 13);
+  if (custom?.length) return custom.join(", ");
   const type = project.projectMeta.productType;
   const base: Record<string, string[]> = {
     "recipe-ebook":
@@ -99,6 +105,8 @@ export function listingTags(project: Project, language: Language): string {
 }
 
 export function readMeText(project: Project, language: Language): string {
+  const custom = project.projectMeta.listing?.[language]?.customerReadme?.trim();
+  if (custom) return custom;
   const meta = project.projectMeta;
   if (language === "nl") {
     return [

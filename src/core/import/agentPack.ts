@@ -1,8 +1,9 @@
 import JSZip from "jszip";
 import { importMarkdown } from "../markdown/importer";
 import { importProjectJson, type ImportedProject } from "../export/projectJson";
-import { guessMime, isSupportedImageFilename, normalizeFilename } from "../assets/imageStore";
+import { guessMime, imageDimensions, isSupportedImageFilename, normalizeFilename } from "../assets/imageStore";
 import type { ImageAsset } from "../../types/project";
+import { ProductionPlanSchema, type ProductionPlan } from "../../types/project";
 
 interface AgentPackManifest {
   format?: string;
@@ -10,6 +11,12 @@ interface AgentPackManifest {
   primaryImport?: string;
   fallbackMarkdown?: string;
   imagesFolder?: string;
+  qcStatus?: "needs-images" | "pass";
+}
+
+export interface AgentPackImportResult extends ImportedProject {
+  manifest: AgentPackManifest;
+  productionPlan?: ProductionPlan;
 }
 
 function textFile(zip: JSZip, path: string): Promise<string | null> {
@@ -42,21 +49,40 @@ async function imagesFromFolder(zip: JSZip, folder: string | undefined): Promise
     if (!isSupportedImageFilename(filename)) continue;
 
     const blob = await entry.async("blob");
+    const typedBlob = new Blob([blob], { type: guessMime(filename) });
     images.push({
       filename,
       type: guessMime(filename),
       size: blob.size,
-      blob: new Blob([blob], { type: guessMime(filename) }),
+      blob: typedBlob,
+      ...(await imageDimensions(typedBlob)),
     });
   }
 
   return images;
 }
 
-export async function importAgentPack(file: File): Promise<ImportedProject> {
+async function productionFromZip(zip: JSZip, manifest: AgentPackManifest): Promise<ProductionPlan | undefined> {
+  const json = await textFile(zip, "prompts/image-prompts.json");
+  const markdown = await textFile(zip, "prompts/chatgpt-image-batches.md");
+  if (!json && !markdown) return undefined;
+  if (!json) return { qcStatus: manifest.qcStatus ?? "needs-images", images: [], batches: [], sourceMarkdown: markdown ?? undefined };
+  const raw = JSON.parse(json);
+  const candidate = Array.isArray(raw) ? { images: raw, batches: [] } : raw;
+  return ProductionPlanSchema.parse({ ...candidate, qcStatus: candidate.qcStatus ?? manifest.qcStatus ?? "needs-images", sourceMarkdown: markdown ?? candidate.sourceMarkdown });
+}
+
+function syncProduction(plan: ProductionPlan | undefined, images: ImageAsset[]): void {
+  if (!plan) return;
+  const uploaded = new Set(images.map((image) => image.filename));
+  for (const record of plan.images) if (uploaded.has(record.filename) && record.status === "planned") record.status = "uploaded";
+}
+
+export async function importAgentPack(file: File): Promise<AgentPackImportResult> {
   const zip = await JSZip.loadAsync(file);
   const manifestText = await textFile(zip, "manifest.json");
   const manifest: AgentPackManifest = manifestText ? JSON.parse(manifestText) : {};
+  const productionPlan = await productionFromZip(zip, manifest);
 
   if (manifest.format && manifest.format !== "pdf-ebook-studio-agent-pack") {
     throw new Error(`Unsupported agent pack format "${manifest.format}".`);
@@ -68,11 +94,16 @@ export async function importAgentPack(file: File): Promise<ImportedProject> {
   ]);
   if (primaryPath) {
     const imported = importProjectJson((await textFile(zip, primaryPath)) || "");
-    if (imported.images.length) return imported;
+    if (productionPlan) imported.project.production = productionPlan;
+    syncProduction(productionPlan, imported.images);
+    if (imported.images.length) return { ...imported, manifest, productionPlan };
 
     const folderImages = await imagesFromFolder(zip, manifest.imagesFolder);
+    syncProduction(productionPlan, folderImages);
     return {
       ...imported,
+      manifest,
+      productionPlan,
       images: folderImages,
       warnings:
         folderImages.length > 0
@@ -88,7 +119,9 @@ export async function importAgentPack(file: File): Promise<ImportedProject> {
 
   const { project, warnings } = importMarkdown((await textFile(zip, markdownPath)) || "");
   const images = await imagesFromFolder(zip, manifest.imagesFolder);
+  syncProduction(productionPlan, images);
   if (!images.length) warnings.push("Agent pack imported without images — add an images/ folder or embedded JSON images.");
 
-  return { project, images, warnings };
+  if (productionPlan) project.production = productionPlan;
+  return { project, images, warnings, manifest, productionPlan };
 }

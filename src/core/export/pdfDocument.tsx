@@ -11,6 +11,7 @@ export function buildRenderContext(
   project: Project,
   images: Map<string, ImageAsset>,
   language: Language,
+  draft = false,
 ): { ctx: RenderContext; pages: Project["pages"] } {
   registerFonts();
   const pages = project.pages
@@ -23,6 +24,7 @@ export function buildRenderContext(
     project,
     imageUrls,
     pageCount: pages.length,
+    draft,
   };
   return { ctx, pages };
 }
@@ -31,12 +33,14 @@ export function ProjectPdfDocument({
   project,
   images,
   language,
+  draft = false,
 }: {
   project: Project;
   images: Map<string, ImageAsset>;
   language: Language;
+  draft?: boolean;
 }) {
-  const { ctx, pages } = buildRenderContext(project, images, language);
+  const { ctx, pages } = buildRenderContext(project, images, language, draft);
   return (
     <Document
       title={`${project.projectMeta.title} (${language.toUpperCase()})`}

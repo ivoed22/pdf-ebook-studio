@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStudio } from "../store/useStudio";
-import { renderProjectPdf, renderSinglePagePdf } from "../core/export/renderPdf";
+import { renderSinglePagePdf } from "../core/export/renderPdf";
 import { pdfToImages, renderPdfPageToCanvas } from "../core/export/pdfToImages";
 import { useT } from "../i18n/strings";
 import { Icon } from "./kit/Icon";
+import { useLayout } from "../store/useLayout";
 
 /** Small LRU cache of rendered pages so switching back is instant. */
 const renderCache = new Map<string, string>();
 const CACHE_LIMIT = 24;
+export function clearPreviewCache(): void { renderCache.clear(); }
 
 function cacheGet(key: string): string | undefined {
   return renderCache.get(key);
@@ -33,6 +35,7 @@ function hash(text: string): string {
 export default function PreviewPane() {
   const project = useStudio((s) => s.project);
   const images = useStudio((s) => s.images);
+  const imageRevision = useStudio((s) => s.imageRevision);
   const selectedPageId = useStudio((s) => s.selectedPageId);
   const selectPage = useStudio((s) => s.selectPage);
   const activeLanguage = useStudio((s) => s.activeLanguage);
@@ -40,8 +43,10 @@ export default function PreviewPane() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<"idle" | "rendering" | "error">("idle");
   const [error, setError] = useState("");
-  const [zoom, setZoom] = useState(1);
-  const [gridMode, setGridMode] = useState(false);
+  const zoom = useLayout((s) => s.previewZoom);
+  const setZoom = useLayout((s) => s.setPreviewZoom);
+  const gridMode = useLayout((s) => s.previewGrid);
+  const setGridMode = useLayout((s) => s.setPreviewGrid);
   const [retry, setRetry] = useState(0);
   const renderSeq = useRef(0);
 
@@ -55,6 +60,7 @@ export default function PreviewPane() {
     [project, activeLanguage],
   );
   const currentIndex = langPages.findIndex((p) => p.id === selectedPageId);
+  const currentPage = currentIndex >= 0 ? langPages[currentIndex] : undefined;
 
   const cacheKey = useMemo(() => {
     if (!project || !selectedPageId) return "";
@@ -62,8 +68,8 @@ export default function PreviewPane() {
     if (!page) return "";
     return `${selectedPageId}:${project.projectMeta.theme}:${hash(
       JSON.stringify(project.projectMeta.themeColors ?? {}),
-    )}:${hash(JSON.stringify(page))}:${images.size}`;
-  }, [project, selectedPageId, images]);
+    )}:${hash(JSON.stringify(page))}:${imageRevision}`;
+  }, [project, selectedPageId, imageRevision]);
 
   useEffect(() => {
     if (!project || !selectedPageId || !canvasRef.current || gridMode) return;
@@ -138,7 +144,7 @@ export default function PreviewPane() {
         </div>
         <button
           className={`btn whitespace-nowrap px-3 ${gridMode ? "bg-[var(--surface-strong)] text-white" : "text-[var(--muted)] hover:bg-[var(--primary-soft)]"}`}
-          onClick={() => setGridMode((g) => !g)}
+          onClick={() => setGridMode(!gridMode)}
           title={gridMode ? t("onePage") : t("allPages")}
         >
           <Icon name={gridMode ? "page" : "grid"} size={12} />
@@ -146,11 +152,11 @@ export default function PreviewPane() {
         </button>
         {!gridMode && (
           <>
-            <button className="icon-button" aria-label="Uitzoomen" onClick={() => setZoom((z) => Math.max(0.4, z - 0.15))}>
+            <button className="icon-button" aria-label="Uitzoomen" onClick={() => setZoom(Math.max(0.4, zoom - 0.15))}>
               −
             </button>
             <span className="w-11 text-center text-xs font-semibold text-[var(--muted)]">{Math.round(zoom * 100)}%</span>
-            <button className="icon-button" aria-label="Inzoomen" onClick={() => setZoom((z) => Math.min(2.2, z + 0.15))}>
+            <button className="icon-button" aria-label="Inzoomen" onClick={() => setZoom(Math.min(2.2, zoom + 0.15))}>
               +
             </button>
           </>
@@ -164,22 +170,13 @@ export default function PreviewPane() {
       ) : (
         <div className="flex flex-1 items-start justify-center overflow-auto p-3 sm:p-6">
           {status === "error" ? (
-            <div className="max-w-sm rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-700">
+            <div className="status-danger max-w-sm rounded-xl border border-transparent p-4 text-sm" role="alert">
               <p className="font-semibold mb-1">{t("previewFailed")}</p>
               <p className="text-xs">{error}</p>
               <button className="btn-secondary mt-4" onClick={() => setRetry((value) => value + 1)}>Opnieuw proberen</button>
             </div>
           ) : (
-            <canvas
-              ref={canvasRef}
-              className="max-w-[calc(100vw-1.5rem)] rounded-sm bg-white shadow-xl lg:max-w-none"
-              aria-label={t("livePreview")}
-              style={{
-                width: `${446 * zoom}px`,
-                opacity: status === "rendering" ? 0.6 : 1,
-                transition: "opacity 150ms",
-              }}
-            />
+            <><canvas ref={canvasRef} role="img" className="max-w-[calc(100vw-1.5rem)] rounded-sm bg-white shadow-xl lg:max-w-none" aria-label={`${t("livePreview")}, pagina ${currentPage?.pageNumber ?? ""}`} style={{ width: `${446 * zoom}px`, opacity: status === "rendering" ? 0.6 : 1, transition: "opacity 150ms" }} />{currentPage && <aside className="sr-only" aria-label="Toegankelijke paginasamenvatting"><h2>Pagina {currentPage.pageNumber}: {typeof currentPage.fields.title === "string" ? currentPage.fields.title : "Zonder titel"}</h2><p>Template: {currentPage.template}. Taal: {currentPage.language.toUpperCase()}.</p>{Object.entries(currentPage.fields).map(([field, value]) => <p key={field}>{field}: {Array.isArray(value) ? value.map((item) => typeof item === "string" ? item : item.name).join(", ") : value}</p>)}</aside>}</>
           )}
         </div>
       )}
@@ -217,15 +214,16 @@ function PreviewGrid({ onPick }: { onPick: (pageId: string) => void }) {
         const pages = project.pages
           .filter((p) => p.language === activeLanguage)
           .sort((a, b) => a.pageNumber - b.pageNumber);
-        const blob = await renderProjectPdf(project, images, activeLanguage);
-        const rendered = await pdfToImages(blob, { scale: 0.7 });
-        if (!alive) return;
-        const list = rendered.map((r, i) => {
-          const url = URL.createObjectURL(r.blob);
+        setItems([]);
+        for (const page of pages) {
+          if (!alive) return;
+          const blob = await renderSinglePagePdf(project, images, page.id);
+          const rendered = await pdfToImages(blob, { scale: 0.7 });
+          if (!alive || !rendered[0]) return;
+          const url = URL.createObjectURL(rendered[0].blob);
           urls.push(url);
-          return { pageId: pages[i]?.id ?? "", pageNumber: pages[i]?.pageNumber ?? r.pageNumber, url };
-        });
-        setItems(list);
+          setItems((current) => [...(current ?? []), { pageId: page.id, pageNumber: page.pageNumber, url }]);
+        }
       } catch (e) {
         if (alive) setError(e instanceof Error ? e.message : String(e));
       }
@@ -237,11 +235,11 @@ function PreviewGrid({ onPick }: { onPick: (pageId: string) => void }) {
   }, [project, images, activeLanguage]);
 
   if (error) {
-    return <div className="p-6 text-sm text-red-600">{error}</div>;
+    return <div className="p-6 text-sm text-[var(--danger)]" role="alert">{error}</div>;
   }
   if (!items) {
     return (
-      <div className="flex-1 flex items-center justify-center text-sm text-stone-400">
+      <div className="flex flex-1 items-center justify-center text-sm text-[var(--muted)]" role="status" aria-live="polite">
         <span className="animate-pulse">{t("gridLoading")}</span>
       </div>
     );
@@ -260,7 +258,7 @@ function PreviewGrid({ onPick }: { onPick: (pageId: string) => void }) {
               alt={`Page ${item.pageNumber}`}
               className="w-full rounded-sm shadow group-hover:shadow-lg group-hover:ring-2 ring-amber-600/50 transition-all bg-white"
             />
-            <div className="text-center text-[11px] text-stone-500 mt-1.5">{item.pageNumber}</div>
+            <div className="mt-1.5 text-center text-xs text-[var(--muted)]">{item.pageNumber}</div>
           </button>
         ))}
       </div>

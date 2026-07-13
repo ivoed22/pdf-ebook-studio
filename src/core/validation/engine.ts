@@ -70,6 +70,8 @@ export function validateProject(project: Project, images: Map<string, ImageAsset
   // --- per page ---
   for (const page of project.pages) {
     const loc = { pageId: page.id, pageNumber: page.pageNumber, language: page.language };
+    const title = page.fields.title;
+    if (typeof title === "string" && title.length > 110) issues.push({ severity: "warning", code: "long-title", message: `Title has ${title.length} characters; 110 or fewer is safer.`, ...loc });
 
     if (!page.template) {
       issues.push({ severity: "error", code: "missing-template", message: "No template assigned.", ...loc });
@@ -179,6 +181,40 @@ export function validateProject(project: Project, images: Map<string, ImageAsset
     }
   }
 
+  const usage = new Map<string, number>();
+  for (const page of project.pages) for (const filename of imageFilenamesForPage(page)) usage.set(filename, (usage.get(filename) ?? 0) + 1);
+  for (const [filename, count] of usage) if (count > 1) issues.push({ severity: "warning", code: "reused-image", message: `Image "${filename}" is used ${count} times; confirm this is intentional.` });
+
+  if (project.production) {
+    const records = new Map(project.production.images.map((item) => [item.filename, item]));
+    for (const filename of usedImages) if (!records.has(filename)) issues.push({ severity: "warning", code: "missing-production-record", message: `Image "${filename}" has no production prompt record.` });
+    for (const record of project.production.images) {
+      if (record.status === "rejected") issues.push({ severity: "error", code: "rejected-image", message: `Image "${record.filename}" is rejected and must be replaced or approved.`, pageId: record.pageId, language: record.language });
+      if (images.has(record.filename) && record.status === "planned") issues.push({ severity: "warning", code: "image-status-stale", message: `Image "${record.filename}" is uploaded but still marked as planned.` });
+      if ((record.cropZoom ?? 1) > 2.2) issues.push({ severity: "warning", code: "extreme-crop", message: `Image "${record.filename}" uses ${record.cropZoom?.toFixed(1)}× crop zoom; verify the safe area and effective resolution.`, pageId: record.pageId, language: record.language });
+      const asset = images.get(record.filename);
+      if (asset?.width && asset.height && record.orientation) {
+        const actual = asset.width / asset.height;
+        const expectedOrientation = actual > 1.08 ? "landscape" : actual < 0.92 ? "portrait" : "square";
+        if (expectedOrientation !== record.orientation) issues.push({ severity: "warning", code: "image-aspect-mismatch", message: `Image "${record.filename}" is ${expectedOrientation}, but the production plan requests ${record.orientation}.`, pageId: record.pageId, language: record.language });
+        const effectiveDpi = Math.round(asset.width / (record.orientation === "portrait" ? 4.2 : record.orientation === "square" ? 5.5 : 7.2));
+        if (effectiveDpi < 200) issues.push({ severity: "warning", code: "low-image-dpi", message: `Image "${record.filename}" is approximately ${effectiveDpi} effective DPI; 200 minimum and 300 recommended.`, pageId: record.pageId, language: record.language });
+      }
+    }
+  }
+
+  const links = new Map<string, Page[]>();
+  for (const page of project.pages) if (page.translationKey) links.set(page.translationKey, [...(links.get(page.translationKey) ?? []), page]);
+  for (const [key, pages] of links) {
+    const languages = new Set(pages.map((page) => page.language));
+    for (const language of project.languageVersions) if (!languages.has(language)) issues.push({ severity: "warning", code: "missing-translation-page", message: `Linked page group "${key}" has no ${language.toUpperCase()} page.`, language });
+    if (new Set(pages.map((page) => page.template)).size > 1) issues.push({ severity: "warning", code: "translation-template-mismatch", message: `Linked page group "${key}" uses different templates.` });
+    for (const page of pages) {
+      const counterpart = pages.find((candidate) => candidate.id !== page.id && candidate.language !== page.language);
+      if (counterpart && page.translationSourceRevision !== (counterpart.contentRevision ?? 0)) issues.push({ severity: "warning", code: "translation-may-be-stale", message: `Page ${page.pageNumber} ${page.language.toUpperCase()} may be outdated relative to its linked page.`, pageId: page.id, language: page.language });
+    }
+  }
+
   // --- page numbering, per language version ---
   for (const language of project.languageVersions) {
     const pages = project.pages
@@ -253,6 +289,19 @@ export function validateProject(project: Project, images: Map<string, ImageAsset
         code: "duplicate-filename",
         message: `Filenames differ only by case: ${group.join(", ")} — exports may overwrite each other.`,
       });
+    }
+  }
+  for (const filename of images.keys()) {
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(filename)) issues.push({ severity: "warning", code: "unsafe-export-filename", message: `Filename "${filename}" contains spaces or unsafe export characters.` });
+  }
+
+  if (project.projectMeta.outputProfile === "etsy-digital-product") {
+    for (const language of project.languageVersions) {
+      const listing = project.projectMeta.listing?.[language];
+      if (!listing) issues.push({ severity: "warning", code: "etsy-listing-incomplete", message: `${language.toUpperCase()} Etsy listing uses generated defaults; review it before publishing.`, language });
+      if ((listing?.title?.length ?? 0) > 140) issues.push({ severity: "error", code: "etsy-title-too-long", message: `${language.toUpperCase()} Etsy title exceeds 140 characters.`, language });
+      if ((listing?.tags?.length ?? 0) > 13 || listing?.tags?.some((tag) => tag.length > 20)) issues.push({ severity: "error", code: "etsy-tags-invalid", message: `${language.toUpperCase()} Etsy tags exceed the 13-tag or 20-character limit.`, language });
+      if (listing && (!listing.description?.trim() || !listing.customerReadme?.trim())) issues.push({ severity: "warning", code: "etsy-assets-incomplete", message: `${language.toUpperCase()} Etsy description or customer README is incomplete.`, language });
     }
   }
 

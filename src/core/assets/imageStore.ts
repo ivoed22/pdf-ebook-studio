@@ -39,7 +39,7 @@ export async function assetsFromFiles(
       continue;
     }
     if (existing.has(filename)) outcome.duplicates.push(filename);
-    outcome.added.push({ filename, type: file.type || guessMime(filename), size: file.size, blob: file });
+    outcome.added.push({ filename, type: file.type || guessMime(filename), size: file.size, blob: file, ...(await imageDimensions(file)) });
   }
   return outcome;
 }
@@ -65,9 +65,19 @@ export async function assetsFromZip(
       type: guessMime(filename),
       size: blob.size,
       blob: new Blob([blob], { type: guessMime(filename) }),
+      ...(await imageDimensions(blob)),
     });
   }
   return outcome;
+}
+
+export async function imageDimensions(blob: Blob): Promise<{ width?: number; height?: number }> {
+  try {
+    const bitmap = await createImageBitmap(blob);
+    const result = { width: bitmap.width, height: bitmap.height };
+    bitmap.close();
+    return result;
+  } catch { return {}; }
 }
 
 export function guessMime(filename: string): string {

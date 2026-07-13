@@ -8,7 +8,8 @@ The default is a prompt-only Agent Pack. It contains the project and reproducibl
 
 - `qcStatus` is `needs-images` until all referenced images exist and pass review.
 - The prompt-only pack contains no `images/` directory.
-- It does contain `prompts/chatgpt-image-batches.md` and `prompts/image-production-sheet.md`.
+- It contains `prompts/image-prompts.json`, `prompts/chatgpt-image-batches.md` and `prompts/image-production-sheet.md`.
+- `image-prompts.json` is the machine-readable production source used by PDF Ebook Studio; Markdown is the human-readable fallback.
 - `project/project-with-images.json` is used only after real images have been embedded.
 - `qcStatus: pass` is allowed only after every referenced image filename is present.
 

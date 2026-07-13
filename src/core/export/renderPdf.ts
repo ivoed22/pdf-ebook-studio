@@ -6,8 +6,9 @@ export async function renderProjectPdf(
   project: Project,
   images: Map<string, ImageAsset>,
   language: Language,
+  options?: { draft?: boolean },
 ): Promise<Blob> {
-  return pdf(ProjectPdfDocument({ project, images, language })).toBlob();
+  return pdf(ProjectPdfDocument({ project, images, language, draft: options?.draft })).toBlob();
 }
 
 export async function renderSinglePagePdf(

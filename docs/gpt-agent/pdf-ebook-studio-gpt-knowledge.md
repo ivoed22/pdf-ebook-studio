@@ -331,7 +331,8 @@ pdf-ebook-studio-agent-pack.zip
 │  └─ project.md
 ├─ prompts/
 │  ├─ chatgpt-image-batches.md
-│  └─ image-production-sheet.md
+│  ├─ image-production-sheet.md
+│  └─ image-prompts.json
 ├─ etsy/
 │  └─ ...listing files...
 └─ qc/
@@ -358,6 +359,10 @@ The importer ignores supporting prompt, Etsy, and QC files and imports the proje
     "pages"
   ],
   "properties": {
+    "schemaVersion": {
+      "enum": [1, 2],
+      "description": "Version 1 is accepted and migrated to version 2 on import."
+    },
     "projectMeta": {
       "type": "object",
       "required": [
@@ -427,7 +432,23 @@ The importer ignores supporting prompt, Etsy, and QC files and imports the proje
       "type": "array"
     },
     "pages": {
-      "type": "array"
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "translationKey": { "type": "string" },
+          "contentRevision": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "production": {
+      "type": "object",
+      "properties": {
+        "qcStatus": { "enum": ["needs-images", "pass"] },
+        "images": { "type": "array" },
+        "batches": { "type": "array" },
+        "sourceMarkdown": { "type": "string" }
+      }
     }
   }
 }

@@ -13,7 +13,7 @@ ALWAYS DETERMINE OR INFER
 - topic, audience, title and style/theme
 - image style direction
 
-Follow an exact requested page count. For a range, choose and state a sensible count. If unspecified use 8 (short), 20 (standard), 30 (expanded) or 40+ (premium).
+Follow an exact requested page count. If unspecified use 8, 20, 30 or 40+ based on product scope.
 
 DEFAULT: PROMPT-ONLY IMAGE MODE
 Do not generate, fake or package image files. Do not create images/ or project/project-with-images.json. Planned image filenames may appear in project fields. Set qcStatus to needs-images.
@@ -27,6 +27,7 @@ Create a downloadable ZIP named pdf-ebook-studio-agent-pack.zip containing:
 - project/project.md
 - prompts/chatgpt-image-batches.md
 - prompts/image-production-sheet.md
+- prompts/image-prompts.json
 - etsy/listing-title.txt
 - etsy/listing-description.txt
 - etsy/tags.txt
@@ -62,9 +63,7 @@ Use the portable envelope:
   "project": { ...valid Project object... }
 }
 
-The project includes every property required by the current schema. projectMeta uses documentFormat "A4-portrait" and outputProfile "etsy-digital-product".
-
-Each page has id, pageNumber, template, language and fields. Number sequentially per language. Use only compatible templates and fill their required fields. Image fields contain exact planned filenames, never paths. Use only schema-supported field types and concise A4-safe text. Do not use outputOnly Etsy templates as normal ebook pages unless requested.
+Follow every current schema requirement. Number pages sequentially per language. Use only compatible templates and required fields. Image fields contain planned filenames, never paths. Use concise A4-safe text. Do not use outputOnly Etsy templates as ebook pages unless requested.
 
 If nl and en reuse the same visual, intentionally reuse its filename. If visuals differ, filenames must be unique and include -nl- or -en-.
 
@@ -75,6 +74,8 @@ IMAGE NAMING
 Use lowercase ASCII, hyphens, a two-digit page prefix and a supported extension: .jpg, .jpeg, .png or .webp. Default to high-quality sRGB JPG for photography. Examples: page-01-cover.jpg and page-12-creamy-lemon-pasta.jpg. Every referenced filename must have exactly one production prompt.
 
 IMAGE PRODUCTION FILES
+prompts/image-prompts.json is the machine-readable source. It contains qcStatus, images and batches using the current ProductionPlan schema. Every image record includes filename, prompt, status planned, updatedAt and, when known, pageId, language, field, templateId, purpose, orientation, aspectRatio, cropFocus, avoid and batchId.
+
 prompts/image-production-sheet.md contains one record per filename:
 - page and language
 - exact filename
@@ -102,7 +103,7 @@ Choose format from the actual template slot, not merely from A4 portrait:
 Studio crops with object-fit cover. Keep the subject in the central 60%, leave crop-safe space and state crop focus. Do not promise exact pixels from generation; verify/upscale/crop later for print.
 
 PROMPT QUALITY
-Every prompt is self-contained. Specify subject, scene, palette, mood, materials, lighting, relevant time of day, camera angle/height, distance, crop, depth, props, safe space and differentiation.
+Every prompt specifies subject, palette, materials, lighting, camera angle, distance, crop, depth, props, safe space and differentiation.
 
 Global rules: premium realistic editorial photography; no text, logos, watermarks, illustration, surreal artifacts, malformed objects, duplicate props or plastic surfaces.
 
@@ -117,13 +118,13 @@ Every food prompt must be derived from the recipe title, ingredients, method and
 
 Never add a visible ingredient, garnish, sauce, side dish or cooking method absent from or incompatible with the recipe. Do not depict the finished dish as a preparation scene or vice versa. Vary 45-degree hero, overhead preparation, macro texture, hands serving and process scenes only when appropriate. Avoid distorted hands/utensils, impossible ingredients, raw-looking cooked food, excessive gloss and repeated plate arrangements.
 
-INTERIOR / EXTERIOR GROUNDING
-Specify space type, architectural style, camera height/angle, lens distance, time and light direction, palette, materials, spatial layout, styling details and differentiation. Avoid impossible geometry, duplicated furniture, blocked circulation, floating objects and inconsistent shadows.
+INTERIOR / EXTERIOR
+Specify space, style, camera, light, palette, materials, layout and differentiation. Avoid impossible geometry, duplicates, floating objects and inconsistent shadows.
 
 QC BEFORE DELIVERY
 Verify:
 - manifest exists at ZIP root and primaryImport is project/project.json
-- required project, prompt, Etsy and QC files exist
+- required project, prompt, image-prompts.json, Etsy and QC files exist
 - no images/, placeholders or project-with-images.json
 - portable project format/version and schema are valid
 - product, languages, theme, output profile, templates and fields are valid

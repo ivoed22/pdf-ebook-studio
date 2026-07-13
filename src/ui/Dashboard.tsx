@@ -12,6 +12,9 @@ import { confirmDialog } from "./kit/ConfirmDialog";
 import { Dialog } from "./kit/Dialog";
 import { Icon } from "./kit/Icon";
 import { LangToggle } from "./kit/LangToggle";
+import { ProductionProgress } from "./ProductionProgress";
+import { StorageManager } from "./StorageManager";
+import { OverflowMenu } from "./kit/OverflowMenu";
 
 const TYPE_LABEL_KEY: Record<string, StringKey> = {
   "recipe-ebook": "typeRecipe",
@@ -26,23 +29,32 @@ export default function Dashboard() {
   const createProject = useStudio((s) => s.createProject);
   const removeProject = useStudio((s) => s.removeProject);
   const duplicateProject = useStudio((s) => s.duplicateProject);
+  const updateStoredProject = useStudio((s) => s.updateStoredProject);
   const t = useT();
   const [wizardOpen, setWizardOpen] = useState(false);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [storageOpen, setStorageOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"recent" | "title">("recent");
+  const [view, setView] = useState<"active" | "favorites" | "archived">("active");
+  const [folder, setFolder] = useState("all");
   const mdInput = useRef<HTMLInputElement>(null);
   const jsonInput = useRef<HTMLInputElement>(null);
   const agentPackInput = useRef<HTMLInputElement>(null);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const filtered = q ? projects.filter((p) => p.projectMeta.title.toLowerCase().includes(q)) : projects;
+    const filtered = projects.filter((project) => {
+      const matchesQuery = !q || project.projectMeta.title.toLowerCase().includes(q) || (project.organization?.tags ?? []).some((tag) => tag.toLowerCase().includes(q));
+      const matchesView = view === "archived" ? project.organization?.archived : !project.organization?.archived && (view !== "favorites" || project.organization?.favorite);
+      return matchesQuery && matchesView && (folder === "all" || project.organization?.folder === folder);
+    });
     return [...filtered].sort((a, b) => sort === "title"
       ? a.projectMeta.title.localeCompare(b.projectMeta.title)
       : b.updatedAt.localeCompare(a.updatedAt));
-  }, [projects, search, sort]);
+  }, [projects, search, sort, view, folder]);
+  const folders = useMemo(() => [...new Set(projects.map((project) => project.organization?.folder).filter((value): value is string => Boolean(value)))].sort(), [projects]);
 
   async function importMarkdownText(text: string) {
     const { project, warnings } = importMarkdown(text);
@@ -91,7 +103,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <LangToggle />
+            <button className="icon-button" aria-label="Lokale opslag en backups" onClick={() => setStorageOpen(true)}><Icon name="folder" size={18} /></button><LangToggle />
             <button className="btn-primary" onClick={() => setWizardOpen(true)}>{t("newProject")}</button>
           </div>
         </div>
@@ -107,7 +119,7 @@ export default function Dashboard() {
             </div>
             <div className="flex flex-wrap gap-2 lg:justify-end">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-semibold"><Icon name="lock" size={15} /> Local-first</span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-semibold"><Icon name="cloud" size={15} /> Automatisch opgeslagen</span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs font-semibold"><Icon name="folder" size={15} /> Lokaal opgeslagen in deze browser</span>
             </div>
           </div>
         </section>
@@ -127,9 +139,12 @@ export default function Dashboard() {
                   <option value="title">{t("sortTitle")}</option>
                 </select>
               </label>
+              {folders.length > 0 && <label><span className="sr-only">Map</span><select className="input sm:w-auto" value={folder} onChange={(event) => setFolder(event.target.value)}><option value="all">Alle mappen</option>{folders.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>}
             </div>
           )}
         </div>
+
+        {projects.length > 0 && <div className="mb-5 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Projectweergave">{([["active", "Actief"], ["favorites", "Favorieten"], ["archived", "Archief"]] as const).map(([value, label]) => <button key={value} className={`studio-chip whitespace-nowrap ${view === value ? "ring-2 ring-[var(--primary)]" : ""}`} aria-pressed={view === value} onClick={() => setView(value)}>{label}</button>)}</div>}
 
         {projects.length === 0 ? (
           <EmptyState onSample={(which) => void importMarkdownText(which === "interior" ? interiorSample : recipeSample)} onNew={() => setWizardOpen(true)} />
@@ -141,6 +156,8 @@ export default function Dashboard() {
                 project={project}
                 onOpen={() => void openProject(project.id)}
                 onDuplicate={() => void duplicateProject(project.id, t("projectCopy"))}
+                onFavorite={() => void updateStoredProject(project.id, (draft) => { draft.organization ??= { tags: [], favorite: false, archived: false }; draft.organization.favorite = !draft.organization.favorite; })}
+                onArchive={() => void updateStoredProject(project.id, (draft) => { draft.organization ??= { tags: [], favorite: false, archived: false }; draft.organization.archived = !draft.organization.archived; })}
                 onDelete={async () => {
                   const ok = await confirmDialog({ title: t("deleteProjectQ"), message: t("deleteProjectBody", { name: project.projectMeta.title }), confirmLabel: t("delete"), danger: true });
                   if (ok) void removeProject(project.id);
@@ -156,6 +173,7 @@ export default function Dashboard() {
       <input ref={agentPackInput} type="file" accept=".zip" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void onAgentPackFile(file); event.target.value = ""; }} />
 
       {wizardOpen && <ProjectWizard onClose={() => setWizardOpen(false)} />}
+      {storageOpen && <StorageManager onClose={() => setStorageOpen(false)} />}
       {pasteOpen && <PasteMarkdownModal onClose={() => setPasteOpen(false)} onImport={(text) => { setPasteOpen(false); void importMarkdownText(text); }} />}
       {importOpen && (
         <Dialog title="Project importeren" description="Kies het formaat dat je al hebt." onClose={() => setImportOpen(false)} maxWidth="max-w-lg">
@@ -175,10 +193,9 @@ function ImportChoice({ icon, title, body, onClick }: { icon: string; title: str
   return <button className="flex min-h-20 items-center gap-4 rounded-2xl border border-[var(--border)] p-4 text-left transition-colors hover:border-[var(--primary)] hover:bg-[var(--primary-soft)]" onClick={onClick}><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]"><Icon name={icon} size={20} /></span><span><strong className="block text-sm text-[var(--ink)]">{title}</strong><span className="mt-0.5 block text-sm text-[var(--muted)]">{body}</span></span></button>;
 }
 
-function ProjectCard({ project, onOpen, onDuplicate, onDelete }: { project: Project; onOpen: () => void; onDuplicate: () => void; onDelete: () => void }) {
+function ProjectCard({ project, onOpen, onDuplicate, onDelete, onFavorite, onArchive }: { project: Project; onOpen: () => void; onDuplicate: () => void; onDelete: () => void; onFavorite: () => void; onArchive: () => void }) {
   const t = useT();
   const [thumb, setThumb] = useState<string | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     let alive = true;
     void import("../core/thumbs").then(({ getCoverThumb }) => getCoverThumb(project, (dataUrl) => alive && setThumb(dataUrl)));
@@ -191,15 +208,16 @@ function ProjectCard({ project, onOpen, onDuplicate, onDelete }: { project: Proj
           {thumb ? <img src={thumb} alt={`Cover van ${project.projectMeta.title}`} className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]" /> : <span className="flex h-full items-center justify-center text-[var(--primary)]"><Icon name="page" size={38} strokeWidth={1.3} /></span>}
           <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-[var(--primary-strong)] shadow-sm">{t(TYPE_LABEL_KEY[project.projectMeta.productType])}</span>
         </div>
-        <div className="px-4 pb-2 pt-4">
-          <h2 className="truncate font-display text-xl font-semibold text-[var(--ink)]">{project.projectMeta.title}</h2>
+          <div className="px-4 pb-2 pt-4">
+          <h2 className="truncate font-display text-xl font-semibold text-[var(--ink)]">{project.organization?.favorite ? "★ " : ""}{project.projectMeta.title}</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">{project.pages.length} {t("pages")} · {project.languageVersions.map((language) => language.toUpperCase()).join(" + ")}</p>
-        </div>
+          {(project.organization?.folder || (project.organization?.tags?.length ?? 0) > 0) && <p className="mt-2 truncate text-xs text-[var(--muted)]">{[project.organization?.folder, ...(project.organization?.tags ?? []).map((tag) => `#${tag}`)].filter(Boolean).join(" · ")}</p>}
+          </div>
+          <div className="px-4 pb-3"><ProductionProgress project={project} compact /></div>
       </button>
       <div className="relative flex min-h-14 items-center justify-between px-4 pb-3">
         <span className="text-xs text-[var(--muted)]">{t("updated")} {new Date(project.updatedAt).toLocaleDateString()}</span>
-        <button className="icon-button" aria-label={`Acties voor ${project.projectMeta.title}`} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><Icon name="more" size={19} /></button>
-        {menuOpen && <div className="absolute bottom-12 right-3 z-10 min-w-40 rounded-xl border border-[var(--border)] bg-white p-1.5 shadow-xl"><button className="btn-ghost w-full justify-start" onClick={() => { setMenuOpen(false); onDuplicate(); }}><Icon name="copy" size={16} />{t("duplicate")}</button><button className="btn-ghost w-full justify-start text-red-700" onClick={() => { setMenuOpen(false); onDelete(); }}><Icon name="trash" size={16} />{t("delete")}</button></div>}
+        <OverflowMenu label={`Acties voor ${project.projectMeta.title}`}><button role="menuitem" className="btn-ghost w-full justify-start" onClick={onFavorite}>{project.organization?.favorite ? "Verwijder favoriet" : "Maak favoriet"}</button><button role="menuitem" className="btn-ghost w-full justify-start" onClick={onArchive}>{project.organization?.archived ? "Uit archief halen" : "Archiveren"}</button><button role="menuitem" className="btn-ghost w-full justify-start" onClick={onDuplicate}><Icon name="copy" size={16} />{t("duplicate")}</button><button role="menuitem" className="btn-ghost w-full justify-start text-[var(--danger)]" onClick={onDelete}><Icon name="trash" size={16} />{t("delete")}</button></OverflowMenu>
       </div>
     </article>
   );

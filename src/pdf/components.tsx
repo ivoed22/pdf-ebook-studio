@@ -10,6 +10,7 @@ export interface RenderContext {
   imageUrls: Map<string, string>;
   /** total number of pages in the exported language version */
   pageCount: number;
+  draft?: boolean;
 }
 
 // ---- field access helpers -------------------------------------------------
@@ -116,6 +117,7 @@ export function PageFrame({
       }}
     >
       {children}
+      {ctx.draft && <Text fixed style={{ position: "absolute", top: "45%", left: 0, right: 0, textAlign: "center", fontSize: 64, fontWeight: 700, color: "#B3263D", opacity: 0.16, transform: "rotate(-28deg)" }}>DRAFT</Text>}
       {footer && <Footer ctx={ctx} page={page} onDark={!padded} />}
     </PdfPage>
   );

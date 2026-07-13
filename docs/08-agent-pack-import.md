@@ -34,7 +34,7 @@ pdf-ebook-studio-agent-pack.zip
 ```json
 {
   "format": "pdf-ebook-studio-agent-pack",
-  "version": 1,
+  "version": 2,
   "app": "pdf-ebook-studio",
   "primaryImport": "project/project-with-images.json",
   "fallbackMarkdown": "project/project.md",
@@ -70,7 +70,8 @@ pdf-ebook-studio-agent-pack.zip
 │  └─ project.md
 ├─ prompts/
 │  ├─ chatgpt-image-batches.md
-│  └─ image-production-sheet.md
+│  ├─ image-production-sheet.md
+│  └─ image-prompts.json
 ├─ etsy/
 │  └─ ...listing files...
 └─ qc/
@@ -80,4 +81,4 @@ pdf-ebook-studio-agent-pack.zip
 
 Its manifest uses `project/project.json` as `primaryImport`, omits `imagesFolder`, and sets `qcStatus` to `needs-images`. It contains no `images/`, placeholder files, or `project/project-with-images.json`.
 
-The importer ignores supporting prompt, Etsy, and QC files and imports the project normally. After generation, real images can be uploaded separately; filenames must exactly match the image fields in the project.
+The importer reads `prompts/image-prompts.json` as the machine-readable production source and keeps the Markdown batch file as a readable fallback. Prompt records, batches and status become available in **Beeldproductie**. After generation, real images can be uploaded separately or as a ZIP; exact filename matches are linked automatically and still require visual approval before they are considered complete.

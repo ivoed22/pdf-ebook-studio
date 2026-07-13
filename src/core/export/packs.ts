@@ -10,6 +10,8 @@ import { renderEtsyVisuals } from "./etsyVisuals";
 
 export type ExportProgress = (step: string) => void;
 
+function versionPart(version?: number): string { return version ? `-v${String(version).padStart(2, "0")}` : ""; }
+
 interface LanguageArtifacts {
   language: Language;
   pdf: Blob;
@@ -38,10 +40,11 @@ export async function exportFinalPdf(
   images: Map<string, ImageAsset>,
   language: Language,
   onProgress: ExportProgress = () => {},
+  version?: number,
 ): Promise<void> {
   onProgress(`Rendering ${language.toUpperCase()} PDF…`);
   const blob = await renderProjectPdf(project, images, language);
-  saveAs(blob, `${slugify(project.projectMeta.title)}-${language}.pdf`);
+  saveAs(blob, `${slugify(project.projectMeta.title)}-${language}${versionPart(version)}.pdf`);
 }
 
 export async function exportPagePreviews(
@@ -49,6 +52,7 @@ export async function exportPagePreviews(
   images: Map<string, ImageAsset>,
   language: Language,
   onProgress: ExportProgress = () => {},
+  version?: number,
 ): Promise<void> {
   const slug = slugify(project.projectMeta.title);
   onProgress(`Rendering ${language.toUpperCase()} PDF…`);
@@ -60,7 +64,7 @@ export async function exportPagePreviews(
     zip.file(`${slug}-${language}-page-${String(p.pageNumber).padStart(2, "0")}.jpg`, p.blob);
   }
   onProgress("Zipping previews…");
-  saveAs(await zip.generateAsync({ type: "blob" }), `${slug}-${language}-page-previews.zip`);
+  saveAs(await zip.generateAsync({ type: "blob" }), `${slug}-${language}-page-previews${versionPart(version)}.zip`);
 }
 
 export async function exportContactSheet(
@@ -68,9 +72,10 @@ export async function exportContactSheet(
   images: Map<string, ImageAsset>,
   language: Language,
   onProgress: ExportProgress = () => {},
+  version?: number,
 ): Promise<void> {
   const artifacts = await buildArtifacts(project, images, language, onProgress, 1.6);
-  saveAs(artifacts.contactSheet, `${slugify(project.projectMeta.title)}-${language}-contact-sheet.pdf`);
+  saveAs(artifacts.contactSheet, `${slugify(project.projectMeta.title)}-${language}-contact-sheet${versionPart(version)}.pdf`);
 }
 
 export async function exportCustomerZip(
@@ -78,6 +83,7 @@ export async function exportCustomerZip(
   images: Map<string, ImageAsset>,
   languages: Language[],
   onProgress: ExportProgress = () => {},
+  version?: number,
 ): Promise<void> {
   const slug = slugify(project.projectMeta.title);
   const zip = new JSZip();
@@ -88,7 +94,7 @@ export async function exportCustomerZip(
     zip.file(language === "nl" ? "Lees-mij.txt" : "Read-Me.txt", readMeText(project, language));
   }
   onProgress("Zipping customer pack…");
-  saveAs(await zip.generateAsync({ type: "blob" }), `${slug}-customer-pack.zip`);
+  saveAs(await zip.generateAsync({ type: "blob" }), `${slug}-customer-pack${versionPart(version)}.zip`);
 }
 
 export async function exportEtsyVisuals(
@@ -96,6 +102,7 @@ export async function exportEtsyVisuals(
   images: Map<string, ImageAsset>,
   languages: Language[],
   onProgress: ExportProgress = () => {},
+  version?: number,
 ): Promise<void> {
   const slug = slugify(project.projectMeta.title);
   const zip = new JSZip();
@@ -104,7 +111,7 @@ export async function exportEtsyVisuals(
     for (const v of visuals) zip.file(v.name, v.blob);
   }
   onProgress("Zipping listing images…");
-  saveAs(await zip.generateAsync({ type: "blob" }), `${slug}-etsy-listing-images.zip`);
+  saveAs(await zip.generateAsync({ type: "blob" }), `${slug}-etsy-listing-images${versionPart(version)}.zip`);
 }
 
 export async function exportSellerZip(
@@ -112,6 +119,7 @@ export async function exportSellerZip(
   images: Map<string, ImageAsset>,
   languages: Language[],
   onProgress: ExportProgress = () => {},
+  version?: number,
 ): Promise<void> {
   const slug = slugify(project.projectMeta.title);
   const zip = new JSZip();
@@ -141,5 +149,5 @@ export async function exportSellerZip(
   zip.file("missing-assets-report.txt", missingAssetsReport(project, images));
 
   onProgress("Zipping seller pack…");
-  saveAs(await zip.generateAsync({ type: "blob" }), `${slug}-seller-etsy-pack.zip`);
+  saveAs(await zip.generateAsync({ type: "blob" }), `${slug}-seller-pack${versionPart(version)}.zip`);
 }

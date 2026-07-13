@@ -1,11 +1,11 @@
 import { saveAs } from "file-saver";
-import { ProjectSchema, newId, type ImageAsset, type Project } from "../../types/project";
+import { migrateProject, newId, type ImageAsset, type Project } from "../../types/project";
 import { guessMime } from "../assets/imageStore";
 import { slugify } from "./renderPdf";
 
 interface PortableProject {
   format: "pdf-ebook-studio-project";
-  version: 1;
+  version: 1 | 2;
   project: Project;
   /** filename -> base64 data (optional, for portable exports) */
   images?: Record<string, string>;
@@ -18,7 +18,7 @@ export async function exportProjectJson(
 ): Promise<void> {
   const payload: PortableProject = {
     format: "pdf-ebook-studio-project",
-    version: 1,
+    version: 2,
     project,
   };
   if (includeImages) {
@@ -46,17 +46,15 @@ export function importProjectJson(jsonText: string): ImportedProject {
       ? (raw as PortableProject).project
       : raw;
 
-  const parsed = ProjectSchema.safeParse(projectData);
-  if (!parsed.success) {
+  let project: Project;
+  try {
+    project = migrateProject(projectData);
+  } catch (error) {
     throw new Error(
       "This file is not a valid PDF Ebook Studio project: " +
-        parsed.error.issues
-          .slice(0, 3)
-          .map((i) => `${i.path.join(".")}: ${i.message}`)
-          .join("; "),
+        (error instanceof Error ? error.message : String(error)),
     );
   }
-  const project = parsed.data;
   // New identity so an import never overwrites an existing project silently.
   project.id = newId();
   project.updatedAt = new Date().toISOString();

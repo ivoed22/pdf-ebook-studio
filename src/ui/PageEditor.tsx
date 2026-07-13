@@ -8,6 +8,7 @@ import { useT } from "../i18n/strings";
 import TemplatePicker from "./TemplatePicker";
 import { ColorField } from "./kit/ColorField";
 import type { ImageFocus } from "../pdf/components";
+import { newId } from "../types/project";
 
 /** Fields edited as one-item-per-line lists. */
 const LIST_FIELDS = new Set([
@@ -59,6 +60,7 @@ export default function PageEditor() {
   const setPageTemplate = useStudio((s) => s.setPageTemplate);
   const setPageNumber = useStudio((s) => s.setPageNumber);
   const setPageLanguage = useStudio((s) => s.setPageLanguage);
+  const updateProject = useStudio((s) => s.updateProject);
   const t = useT();
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -90,7 +92,7 @@ export default function PageEditor() {
       const suggestion = missing ? suggestMatch(current, availableImages) : undefined;
       const focus = (page!.fields[`${field}Focus`] as ImageFocus) || "center";
       return (
-        <div key={field} className="mb-3">
+        <div key={field} className="mb-3 rounded-xl border border-transparent p-1 transition-colors focus-within:border-[var(--primary)]" onDragOver={(event) => { if (event.dataTransfer.types.includes("application/x-ebook-asset")) event.preventDefault(); }} onDrop={(event) => { const filename = event.dataTransfer.getData("application/x-ebook-asset"); if (filename) { event.preventDefault(); setPageField(page!.id, field, filename); } }}>
           <label className="label" htmlFor={inputId}>
             {labelFor(field)} {isRequired && <span className="text-amber-700">*</span>}
           </label>
@@ -252,6 +254,11 @@ export default function PageEditor() {
         </div>
       </div>
 
+      <label className="label" htmlFor="page-chapter">Hoofdstuk</label>
+      <input id="page-chapter" className="input mb-4" value={page.chapter ?? ""} placeholder="Bijvoorbeeld Voorgerechten" onChange={(event) => updateProject((draft) => { const current = draft.pages.find((item) => item.id === page.id); if (current) current.chapter = event.target.value || undefined; })} />
+
+      {project.languageVersions.length > 1 && <TranslationLink pageId={page.id} />}
+
       <span className="label">{t("template")}</span>
       <button
         className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-left hover:border-stone-500 transition-colors cursor-pointer mb-1"
@@ -306,6 +313,16 @@ export default function PageEditor() {
       )}
     </div>
   );
+}
+
+function TranslationLink({ pageId }: { pageId: string }) {
+  const project = useStudio((state) => state.project)!;
+  const updateProject = useStudio((state) => state.updateProject);
+  const page = project.pages.find((item) => item.id === pageId)!;
+  const linked = project.pages.find((candidate) => candidate.id !== page.id && candidate.translationKey && candidate.translationKey === page.translationKey);
+  const stale = linked && page.translationSourceRevision !== (linked.contentRevision ?? 0);
+  const targetLanguage = project.languageVersions.find((language) => language !== page.language);
+  return <div className="mb-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3"><div className="flex items-center justify-between gap-2"><p className="label">Gekoppelde vertaling</p>{linked && <span className={stale ? "status-warning rounded-full px-2 py-1 text-xs font-semibold" : "status-success rounded-full px-2 py-1 text-xs font-semibold"}>{stale ? "Mogelijk verouderd" : "Vergeleken"}</span>}</div><select className="input" value={linked?.id ?? ""} onChange={(event) => { const otherId = event.target.value; updateProject((draft) => { const current = draft.pages.find((item) => item.id === page.id); const other = draft.pages.find((item) => item.id === otherId); if (!current) return; if (!other) { delete current.translationKey; delete current.translationSourceRevision; return; } const key = current.translationKey || other.translationKey || newId(); current.translationKey = key; other.translationKey = key; current.translationSourceRevision = other.contentRevision ?? 0; other.translationSourceRevision = current.contentRevision ?? 0; }); }}><option value="">Niet gekoppeld</option>{project.pages.filter((candidate) => candidate.id !== page.id && candidate.language !== page.language).map((candidate) => <option key={candidate.id} value={candidate.id}>P{candidate.pageNumber} · {candidate.language.toUpperCase()} · {typeof candidate.fields.title === "string" ? candidate.fields.title : "Zonder titel"}</option>)}</select>{!linked && targetLanguage && <button className="btn-secondary mt-2 w-full" onClick={() => updateProject((draft) => { const source = draft.pages.find((item) => item.id === page.id); if (!source) return; const key = source.translationKey || newId(); source.translationKey = key; const fields = Object.fromEntries(Object.entries(source.fields).map(([name, value]) => [name, Array.isArray(value) ? [] : name.toLowerCase().includes("image") ? value : ""])); draft.pages.push({ ...structuredClone(source), id: newId(), language: targetLanguage, translationKey: key, translationSourceRevision: source.contentRevision ?? 0, contentRevision: 0, fields }); })}>Maak lege {targetLanguage.toUpperCase()}-tegenpagina</button>}{linked && <div className="mt-2 grid grid-cols-2 gap-2"><button className="btn-secondary px-2 text-xs" onClick={() => updateProject((draft) => { const source = draft.pages.find((item) => item.id === page.id); const target = draft.pages.find((item) => item.id === linked.id); if (!source || !target) return; target.template = source.template; for (const [name, value] of Object.entries(source.fields)) if (!(name in target.fields)) target.fields[name] = Array.isArray(value) ? [] : ""; target.contentRevision = (target.contentRevision ?? 0) + 1; })}>Synchroniseer structuur</button><button className="btn-secondary px-2 text-xs" onClick={() => updateProject((draft) => { const source = draft.pages.find((item) => item.id === page.id); const target = draft.pages.find((item) => item.id === linked.id); if (!source || !target) return; for (const name of ["heroImage", "imageA", "imageB", "images"]) if (source.fields[name]) target.fields[name] = structuredClone(source.fields[name]); target.contentRevision = (target.contentRevision ?? 0) + 1; })}>Deel beelden bewust</button></div>}{linked && stale && <button className="btn-secondary mt-2 w-full" onClick={() => updateProject((draft) => { const current = draft.pages.find((item) => item.id === page.id); const source = draft.pages.find((item) => item.id === linked.id); if (current && source) current.translationSourceRevision = source.contentRevision ?? 0; })}>Markeer als vergeleken</button>}{linked && <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-white p-2 text-xs"><div><strong>{page.language.toUpperCase()} · P{page.pageNumber}</strong><p className="truncate text-[var(--muted)]">{typeof page.fields.title === "string" ? page.fields.title : "Zonder titel"}</p></div><div><strong>{linked.language.toUpperCase()} · P{linked.pageNumber}</strong><p className="truncate text-[var(--muted)]">{typeof linked.fields.title === "string" ? linked.fields.title : "Zonder titel"}</p></div></div>}<p className="mt-2 text-xs text-[var(--muted)]">Koppelen synchroniseert nooit automatisch tekst; het maakt vergelijking en QC mogelijk.</p></div>;
 }
 
 function labelFor(field: string): string {

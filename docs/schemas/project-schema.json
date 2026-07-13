@@ -8,6 +8,10 @@
     "pages"
   ],
   "properties": {
+    "schemaVersion": {
+      "enum": [1, 2],
+      "description": "Version 1 is accepted and migrated to version 2 on import."
+    },
     "projectMeta": {
       "type": "object",
       "required": [
@@ -50,6 +54,10 @@
         },
         "year": {
           "type": "string"
+        },
+        "listing": {
+          "type": "object",
+          "description": "Optional per-language Etsy listing overrides for title, description, tags, contents, customerReadme and thumbnailOrder."
         }
       }
     },
@@ -77,7 +85,34 @@
       "type": "array"
     },
     "pages": {
-      "type": "array"
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "translationKey": { "type": "string" },
+          "contentRevision": { "type": "integer", "minimum": 0 },
+          "translationSourceRevision": { "type": "integer", "minimum": 0 },
+          "chapter": { "type": "string" }
+        }
+      }
+    },
+    "production": {
+      "type": "object",
+      "properties": {
+        "qcStatus": { "enum": ["needs-images", "pass"] },
+        "images": { "type": "array" },
+        "batches": { "type": "array" },
+        "sourceMarkdown": { "type": "string" }
+      }
+    },
+    "organization": {
+      "type": "object",
+      "properties": {
+        "folder": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "favorite": { "type": "boolean" },
+        "archived": { "type": "boolean" }
+      }
     }
   }
 }
