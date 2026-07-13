@@ -24,6 +24,33 @@ const STRINGS = {
     en: "Turn prepared content and images into premium, sellable A4 PDFs.",
   },
   newProject: { nl: "+ Nieuw project", en: "+ New project" },
+  importProject: { nl: "Project importeren", en: "Import project" },
+  importAgentPackDirect: { nl: "Agent ZIP importeren", en: "Import Agent ZIP" },
+  quickStartTitle: { nl: "Start of importeer een project", en: "Start or import a project" },
+  quickStartBody: {
+    nl: "Maak een leeg project, kies een bestaand bestand of importeer direct een compleet ChatGPT Agent Pack.",
+    en: "Create a blank project, choose an existing file, or directly import a complete ChatGPT Agent Pack.",
+  },
+  recommendedAgentPack: { nl: "Aanbevolen voor ChatGPT", en: "Recommended for ChatGPT" },
+  examplesTitle: { nl: "Voorbeeldprojecten", en: "Sample projects" },
+  examplesBody: {
+    nl: "Open een compleet voorbeeld om templates, QC en export direct te verkennen.",
+    en: "Open a complete sample to explore templates, QC, and export right away.",
+  },
+  showExamples: { nl: "Toon de voorbeelden", en: "Show samples" },
+  noProjectsBody: {
+    nl: "Je bibliotheek is nog leeg. Start hierboven of open hieronder een voorbeeldproject.",
+    en: "Your library is empty. Start above or open a sample project below.",
+  },
+  interiorSampleBody: {
+    nl: "Een editorial interieurmagazine met paletten, materialen en beeldrijke pagina's.",
+    en: "An editorial interior magazine with palettes, materials, and image-rich pages.",
+  },
+  recipeSampleBody: {
+    nl: "Een compleet receptenebook met bereiding, voeding en verkoopklare export.",
+    en: "A complete recipe ebook with preparation, nutrition, and sales-ready export.",
+  },
+  openSample: { nl: "Voorbeeld openen", en: "Open sample" },
   importMarkdown: { nl: "Importeer Markdown…", en: "Import Markdown…" },
   pasteMarkdown: { nl: "Plak Markdown…", en: "Paste Markdown…" },
   importJson: { nl: "Importeer project-JSON…", en: "Import project JSON…" },

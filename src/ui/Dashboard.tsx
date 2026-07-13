@@ -124,8 +124,24 @@ export default function Dashboard() {
           </div>
         </section>
 
+        <section className="studio-card mb-6 p-4 sm:p-5" aria-labelledby="quick-start-title">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 id="quick-start-title" className="font-display text-xl font-semibold text-[var(--ink)] sm:text-2xl">{t("quickStartTitle")}</h2>
+                <span className="studio-chip">{t("recommendedAgentPack")}</span>
+              </div>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--muted)]">{t("quickStartBody")}</p>
+            </div>
+            <div className="grid shrink-0 gap-2 sm:grid-cols-3">
+              <button className="btn-primary justify-center" onClick={() => setWizardOpen(true)}>{t("newProject")}</button>
+              <button className="btn-secondary justify-center" onClick={() => setImportOpen(true)}><Icon name="folder" size={17} /> {t("importProject")}</button>
+              <button className="btn-secondary justify-center border-[var(--primary)] text-[var(--primary)]" onClick={() => agentPackInput.current?.click()}><Icon name="export" size={17} /> {t("importAgentPackDirect")}</button>
+            </div>
+          </div>
+        </section>
+
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <button className="btn-secondary" onClick={() => setImportOpen(true)}><Icon name="folder" size={17} /> Importeren</button>
           {projects.length > 0 && (
             <div className="flex min-w-0 flex-1 flex-col gap-2 sm:ml-auto sm:flex-row sm:justify-end">
               <label className="min-w-0 sm:w-64">
@@ -147,7 +163,10 @@ export default function Dashboard() {
         {projects.length > 0 && <div className="mb-5 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Projectweergave">{([["active", "Actief"], ["favorites", "Favorieten"], ["archived", "Archief"]] as const).map(([value, label]) => <button key={value} className={`studio-chip whitespace-nowrap ${view === value ? "ring-2 ring-[var(--primary)]" : ""}`} aria-pressed={view === value} onClick={() => setView(value)}>{label}</button>)}</div>}
 
         {projects.length === 0 ? (
-          <EmptyState onSample={(which) => void importMarkdownText(which === "interior" ? interiorSample : recipeSample)} onNew={() => setWizardOpen(true)} />
+          <section className="studio-card mb-6 px-5 py-6 sm:px-7" aria-labelledby="empty-library-title">
+            <h2 id="empty-library-title" className="font-display text-2xl font-semibold text-[var(--ink)]">{t("noProjects")}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--muted)]">{t("noProjectsBody")}</p>
+          </section>
         ) : (
           <section aria-label="Projecten" className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {visible.map((project) => (
@@ -166,6 +185,8 @@ export default function Dashboard() {
             ))}
           </section>
         )}
+
+        <ExampleProjects compact={projects.length > 0} onSample={(which) => void importMarkdownText(which === "interior" ? interiorSample : recipeSample)} />
       </main>
 
       <input ref={mdInput} type="file" accept=".md,.markdown,.txt" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void file.text().then(importMarkdownText); event.target.value = ""; }} />
@@ -223,13 +244,16 @@ function ProjectCard({ project, onOpen, onDuplicate, onDelete, onFavorite, onArc
   );
 }
 
-function EmptyState({ onSample, onNew }: { onSample: (which: "interior" | "recipe") => void; onNew: () => void }) {
+function ExampleProjects({ onSample, compact }: { onSample: (which: "interior" | "recipe") => void; compact: boolean }) {
   const t = useT();
-  return <section className="studio-card p-5 sm:p-8"><div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"><div><span className="studio-chip">SNEL STARTEN</span><h2 className="mt-3 font-display text-2xl font-semibold sm:text-3xl">{t("onboardTitle")}</h2><p className="mt-2 max-w-xl text-sm text-[var(--muted)]">Begin leeg of ontdek de volledige workflow met een visueel voorbeeldproject.</p></div><button className="btn-primary" onClick={onNew}>{t("newProject")}</button></div><div className="grid gap-4 md:grid-cols-2"><SampleCard title={t("loadInteriorSample")} body="Een editorial interieurmagazine met palettes, materialen en beeldrijke pagina’s." accent="from-[#e8558d] to-[#8c56eb]" onClick={() => onSample("interior")} /><SampleCard title={t("loadRecipeSample")} body="Een compleet receptenebook met bereiding, voeding en verkoopklare export." accent="from-[#f59e66] to-[#e8558d]" onClick={() => onSample("recipe")} /></div></section>;
+  const cards = <div className="grid gap-4 md:grid-cols-2"><SampleCard title={t("loadInteriorSample")} body={t("interiorSampleBody")} accent="from-[#e8558d] to-[#8c56eb]" onClick={() => onSample("interior")} /><SampleCard title={t("loadRecipeSample")} body={t("recipeSampleBody")} accent="from-[#f59e66] to-[#e8558d]" onClick={() => onSample("recipe")} /></div>;
+  if (compact) return <details className="studio-card group mt-8 p-5 sm:p-6"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--primary)]"><span><strong className="block font-display text-xl text-[var(--ink)]">{t("examplesTitle")}</strong><span className="mt-1 block text-sm text-[var(--muted)]">{t("showExamples")}</span></span><Icon name="right" size={18} className="shrink-0 transition-transform group-open:rotate-90" /></summary><div className="mt-5 border-t border-[var(--border)] pt-5"><p className="mb-4 text-sm text-[var(--muted)]">{t("examplesBody")}</p>{cards}</div></details>;
+  return <section className="studio-card p-5 sm:p-8" aria-labelledby="examples-title"><div className="mb-6"><span className="studio-chip">{t("onboardTitle")}</span><h2 id="examples-title" className="mt-3 font-display text-2xl font-semibold text-[var(--ink)] sm:text-3xl">{t("examplesTitle")}</h2><p className="mt-2 max-w-xl text-sm text-[var(--muted)]">{t("examplesBody")}</p></div>{cards}</section>;
 }
 
 function SampleCard({ title, body, accent, onClick }: { title: string; body: string; accent: string; onClick: () => void }) {
-  return <button className="group overflow-hidden rounded-2xl border border-[var(--border)] bg-white text-left transition-all hover:border-[var(--primary)] hover:shadow-lg" onClick={onClick}><span className={`block h-24 bg-gradient-to-br ${accent} p-5`}><Icon name="sparkle" size={26} className="text-white" /></span><span className="block p-5"><strong className="font-display text-xl text-[var(--ink)]">{title}</strong><span className="mt-1 block text-sm leading-relaxed text-[var(--muted)]">{body}</span><span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--primary)]">Voorbeeld openen <Icon name="right" size={15} /></span></span></button>;
+  const t = useT();
+  return <button className="group overflow-hidden rounded-2xl border border-[var(--border)] bg-white text-left transition-all hover:border-[var(--primary)] hover:shadow-lg" onClick={onClick}><span className={`block h-24 bg-gradient-to-br ${accent} p-5`}><Icon name="sparkle" size={26} className="text-white" /></span><span className="block p-5"><strong className="font-display text-xl text-[var(--ink)]">{title}</strong><span className="mt-1 block text-sm leading-relaxed text-[var(--muted)]">{body}</span><span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[var(--primary)]">{t("openSample")} <Icon name="right" size={15} /></span></span></button>;
 }
 
 function PasteMarkdownModal({ onClose, onImport }: { onClose: () => void; onImport: (text: string) => void }) {
